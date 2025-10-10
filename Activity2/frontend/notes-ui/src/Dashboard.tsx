@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { createNote, deleteNote, fetchNotes, setAuth, updateNote } from './api';
 import type { Note } from './api';
+import './notes.css';
 
 type Props = { token: string; onLogout: () => void };
 
@@ -8,6 +9,7 @@ export default function Dashboard({ token, onLogout }: Props) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     setAuth(token);
@@ -34,20 +36,47 @@ export default function Dashboard({ token, onLogout }: Props) {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Your Notes</h2>
-        <button onClick={onLogout}>Logout</button>
+    <div className="notes-container">
+      <div className="notes-header">
+        <div>
+          <h2 className="notes-title">Your Notes</h2>
+          <div className="notes-subtitle">A tidy place to capture thoughts — fast and beautiful.</div>
+        </div>
+        <div className="notes-header-right">
+          <div className="notes-count">{notes.length} notes</div>
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              setAuth(null);
+              onLogout();
+            }}
+            aria-label="Logout"
+          >
+            Logout
+          </button>
+        </div>
       </div>
-      <form onSubmit={handleAdd} style={{ display: 'grid', gap: 8, marginBottom: 16 }}>
+
+      <div className="notes-toolbar">
+        <input className="notes-search" placeholder="Search notes by title or content..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+      </div>
+
+      <form onSubmit={handleAdd} className="notes-form">
         <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
         <textarea placeholder="Content" value={content} onChange={e => setContent(e.target.value)} rows={3} />
         <button type="submit">Add</button>
       </form>
-      <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 8 }}>
-        {notes.map(n => (
-          <NoteItem key={n.id} note={n} onUpdate={handleUpdate} onDelete={handleDelete} />
-        ))}
+
+      <ul className="notes-list">
+        {notes
+          .filter(n => {
+            if (!searchTerm.trim()) return true;
+            const s = searchTerm.toLowerCase();
+            return n.title.toLowerCase().includes(s) || (n.content ?? '').toLowerCase().includes(s);
+          })
+          .map(n => (
+            <NoteItem key={n.id} note={n} onUpdate={handleUpdate} onDelete={handleDelete} />
+          ))}
       </ul>
     </div>
   );
@@ -58,27 +87,27 @@ function NoteItem({ note, onUpdate, onDelete }: { note: Note; onUpdate: (n: Note
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content ?? '');
   return (
-    <li style={{ border: '1px solid #ddd', padding: 12, borderRadius: 8 }}>
+    <li className="note-card">
       {!editing ? (
         <div>
-          <div style={{ fontWeight: 600 }}>{note.title}</div>
-          {note.content && <div style={{ color: '#555' }}>{note.content}</div>}
+          <div className="note-title">{note.title}</div>
+          {note.content && <div className="note-content">{note.content}</div>}
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: 6 }}>
+        <div className="edit-group">
           <input value={title} onChange={e => setTitle(e.target.value)} />
           <textarea rows={2} value={content} onChange={e => setContent(e.target.value)} />
         </div>
       )}
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+      <div className="note-actions">
         {!editing ? (
           <>
-            <button onClick={() => setEditing(true)}>Edit</button>
+            <button onClick={() => setEditing(true)} className="">Edit</button>
             <button onClick={() => onDelete(note)}>Delete</button>
           </>
         ) : (
           <>
-            <button onClick={() => { onUpdate(note, title.trim(), content.trim() || undefined); setEditing(false); }}>Save</button>
+            <button onClick={() => { onUpdate(note, title.trim(), content.trim() || undefined); setEditing(false); }} className="primary">Save</button>
             <button onClick={() => { setEditing(false); setTitle(note.title); setContent(note.content ?? ''); }}>Cancel</button>
           </>
         )}
