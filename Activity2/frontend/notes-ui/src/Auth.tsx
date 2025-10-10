@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { login, register, setAuth } from './api';
+import './auth.css';
 
 type Props = { onAuthed: (token: string) => void };
 
@@ -22,19 +23,27 @@ export default function Auth({ onAuthed }: Props) {
   }
 
   return (
-    <div style={{ maxWidth: 400, margin: '10vh auto', padding: 24, border: '1px solid #ddd', borderRadius: 8 }}>
-      <h2>{mode === 'login' ? 'Login' : 'Register'}</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 8 }}>
+    <div className="auth-wrap">
+      <div className="auth-header">
+        <div>
+          <h2 className="auth-title">{mode === 'login' ? 'Welcome' : 'Create account'}</h2>
+          <div className="auth-sub">{mode === 'login' ? 'Log in to your notes account' : 'Register a new account'}</div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="auth-form">
         <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
         <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
         <button type="submit">{mode === 'login' ? 'Login' : 'Create account'}</button>
       </form>
-      <div style={{ marginTop: 8 }}>
-        <button onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
+
+      <div className="auth-toggle">
+        <button className="ghost" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
           {mode === 'login' ? 'Need an account? Register' : 'Have an account? Login'}
         </button>
       </div>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {error && <div className="auth-error">{error}</div>}
     </div>
   );
 }
