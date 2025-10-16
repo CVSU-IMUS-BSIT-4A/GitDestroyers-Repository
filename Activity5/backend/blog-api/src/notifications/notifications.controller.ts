@@ -36,4 +36,15 @@ export class NotificationsController {
     await this.notificationsService.markAllAsRead(req.user?.userId);
     return { message: 'All notifications marked as read' };
   }
+
+  @Post(':id/unread')
+  async markAsUnread(@Param('id') id: number, @Request() req: any) {
+    return this.notificationsService.markAsUnread(id, req.user?.userId);
+  }
+
+  @Post(':id/delete')
+  async deleteNotification(@Param('id') id: number, @Request() req: any) {
+    await this.notificationsService.deleteNotification(id, req.user?.userId);
+    return { message: 'Notification deleted successfully' };
+  }
 }

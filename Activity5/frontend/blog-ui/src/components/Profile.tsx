@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { getUser, listPosts, setAuthToken, getCurrentUserIdFromToken, updateUser, uploadAvatar } from '../api';
+import { listPosts, updateUser, uploadAvatar } from '../api';
 import { useTheme } from '../hooks/useTheme';
+import { useCurrentUser } from '../hooks/useCurrentUser';
+import { useClickOutside } from '../hooks/useClickOutside';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -9,26 +11,17 @@ import { Skeleton } from './ui/skeleton';
 import { Alert, AlertDescription } from './ui/alert';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { User, Mail, Calendar, Edit, LogOut, ArrowLeft, Check, X, Upload, Camera, Sun, Moon, Bell, ChevronDown, Settings } from 'lucide-react';
+import { User, Mail, Calendar, Edit, LogOut, ArrowLeft, Check, X, Upload, Camera, Sun, Moon, ChevronDown, Settings } from 'lucide-react';
 import { toast } from 'sonner';
+import NotificationButton from './NotificationButton';
 import type { Post } from '../api';
 
-interface User {
-  id: number;
-  name?: string;
-  email?: string;
-  bio?: string;
-  avatar?: string;
-  created_at?: string;
-}
 
 export default function Profile() {
   const { isDarkMode, toggleDarkMode } = useTheme();
-  const [user, setUser] = useState<User | null>(null);
-  const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
+  const { currentUser, userId, handleLogout, loading } = useCurrentUser();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
   const [postsLoading, setPostsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -36,54 +29,23 @@ export default function Profile() {
   const [editAvatar, setEditAvatar] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   
-  const currentUserId = getCurrentUserIdFromToken();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const notificationsDropdownRef = useRef<HTMLDivElement>(null);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const { ref: profileDropdownRef } = useClickOutside(() => setShowProfileDropdown(false));
 
   useEffect(() => {
-    loadUserProfile();
+    console.log('Profile: userId changed:', userId);
+    console.log('Profile: currentUser:', currentUser);
+    console.log('Profile: loading:', loading);
     loadUserPosts();
-  }, []);
-
-  // Handle click outside dropdowns
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (notificationsDropdownRef.current && !notificationsDropdownRef.current.contains(event.target as Node)) {
-        setShowNotificationsDropdown(false);
-      }
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
-        setShowProfileDropdown(false);
-      }
-    };
-
-    if (showNotificationsDropdown || showProfileDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showNotificationsDropdown, showProfileDropdown]);
-
-  async function loadUserProfile() {
-    try {
-      setLoading(true);
-      const userData = await getUser(currentUserId!);
-      setUser(userData);
-    } catch (err) {
-      console.error('Failed to load user profile:', err);
-      setError('Failed to load profile');
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [userId, currentUser, loading]);
 
   async function loadUserPosts() {
+    if (!userId) return;
+    
     try {
       setPostsLoading(true);
       const response = await listPosts();
-      const filteredPosts = response.data.filter((post: Post) => post.author?.id === currentUserId);
+      const filteredPosts = response.data.filter((post: Post) => post.author?.id === userId);
       setUserPosts(filteredPosts);
     } catch (err) {
       console.error('Failed to load user posts:', err);
@@ -92,14 +54,10 @@ export default function Profile() {
     }
   }
 
-  const handleLogout = () => {
-    setAuthToken(null);
-    window.location.href = '/auth';
-  };
 
   const handleStartEdit = () => {
     setIsEditing(true);
-    setEditBio(user?.bio || '');
+    setEditBio(currentUser?.bio || '');
     setEditAvatar(null);
     setError(null); 
   };
@@ -132,7 +90,7 @@ export default function Profile() {
   };
 
   const handleSaveChanges = async () => {
-    if (!user) return;
+    if (!currentUser) return;
     
     setIsSaving(true);
     setError(null); 
@@ -142,21 +100,21 @@ export default function Profile() {
       let avatarUpdated = false;
       
       const updateData: any = {};
-      if (editBio !== user.bio) {
+      if (editBio !== currentUser.bio) {
         updateData.bio = editBio;
         bioUpdated = true;
       }
 
       if (Object.keys(updateData).length > 0) {
-        const updatedUser = await updateUser(user.id, updateData);
-        setUser({ ...user, ...updatedUser }); 
+        const updatedUser = await updateUser(currentUser.id, updateData);
+        // Note: currentUser is managed by useCurrentUser hook
       }
       
       const fileInput = fileInputRef.current;
       if (fileInput && fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
-        const updatedUser = await uploadAvatar(user.id, file);
-          setUser({ ...user, ...updatedUser }); 
+        const updatedUser = await uploadAvatar(currentUser.id, file);
+        // Note: currentUser is managed by useCurrentUser hook
         avatarUpdated = true;
       }
       
@@ -241,29 +199,7 @@ export default function Profile() {
           </div>
           <div className="flex items-center gap-3">
             {/* Notifications Button */}
-            <div className="relative" ref={notificationsDropdownRef}>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-10 w-10 p-0"
-                onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
-              >
-                <Bell className="h-4 w-4" />
-              </Button>
-              
-              {showNotificationsDropdown && (
-                <div className="absolute right-0 top-11 w-80 bg-background border border-border rounded-lg shadow-lg z-50">
-                  <div className="p-4">
-                    <h3 className="font-semibold mb-3 text-foreground">Notifications</h3>
-                    <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">
-                        No new notifications
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <NotificationButton userId={userId} />
 
             {/* Dark/Light Mode Toggle */}
             <Button
@@ -288,15 +224,15 @@ export default function Profile() {
                 onClick={() => setShowProfileDropdown(!showProfileDropdown)}
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm overflow-hidden">
-                  {user?.avatar ? (
+                  {currentUser?.avatar ? (
                     <img 
-                      src={`http://localhost:3005${user.avatar}`} 
+                      src={`http://localhost:3005${currentUser.avatar}`} 
                       alt="Avatar" 
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    user?.name ? user.name.charAt(0).toUpperCase() : 
-                    user?.email ? user.email.charAt(0).toUpperCase() : 'U'
+                    currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 
+                    currentUser?.email ? currentUser.email.charAt(0).toUpperCase() : 'U'
                   )}
                 </div>
                 <ChevronDown className="h-4 w-4" />
@@ -349,15 +285,15 @@ export default function Profile() {
                       alt="Avatar Preview" 
                       className="w-full h-full rounded-full object-cover"
                     />
-                  ) : user?.avatar ? (
+                  ) : currentUser?.avatar ? (
                     <img 
-                      src={`http://localhost:3005${user.avatar}`} 
+                      src={`http://localhost:3005${currentUser.avatar}`} 
                       alt="Avatar" 
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    user?.name ? user.name.charAt(0).toUpperCase() : 
-                    user?.email ? user.email.charAt(0).toUpperCase() : 'U'
+                    currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 
+                    currentUser?.email ? currentUser.email.charAt(0).toUpperCase() : 'U'
                   )}
                 </div>
                 {isEditing && (
@@ -381,7 +317,7 @@ export default function Profile() {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <CardTitle className="text-2xl">
-                    {user?.name || 'No Name Set'}
+                    {currentUser?.name || 'No Name Set'}
                   </CardTitle>
                   {!isEditing && (
                     <Button 
@@ -439,14 +375,14 @@ export default function Profile() {
                   </div>
                 ) : (
                   <div className="text-muted-foreground mb-4">
-                    {user?.bio || 'No bio available. Add a bio to tell others about yourself!'}
+                    {currentUser?.bio || 'No bio available. Add a bio to tell others about yourself!'}
                   </div>
                 )}
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  {user?.created_at && (
+                  {currentUser?.created_at && (
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      <span>Joined {formatDate(user.created_at)}</span>
+                      <span>Joined {formatDate(currentUser.created_at)}</span>
                     </div>
                   )}
                 </div>

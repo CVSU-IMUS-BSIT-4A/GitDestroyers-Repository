@@ -1,16 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  getCurrentUserIdFromToken,
-  getUser,
-  getNotifications,
-  getUnreadNotificationCount,
-  markAllNotificationsAsRead,
-  markNotificationAsRead,
   createPost,
 } from '../api';
-import { setAuthToken } from '../api';
 import { useTheme } from '../hooks/useTheme';
+import { useCurrentUser } from '../hooks/useCurrentUser';
+import { useClickOutside } from '../hooks/useClickOutside';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
@@ -22,33 +17,20 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  Bell,
   Sun,
   Moon,
   Home,
   Plus,
 } from 'lucide-react';
 import Feed, { type FeedRef } from './Feed';
+import NotificationButton from './NotificationButton';
 import type { Post } from '../api';
 
 
-interface User {
-  id: number;
-  name?: string;
-  email?: string;
-  bio?: string;
-  avatar?: string;
-  created_at?: string;
-}
 
 export default function PostsPage() {
   const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [showAddPostDialog, setShowAddPostDialog] = useState(false);
   const [postTitle, setPostTitle] = useState('');
   const [postContent, setPostContent] = useState('');
@@ -57,104 +39,17 @@ export default function PostsPage() {
   const TITLE_MAX = 120;
   const CONTENT_MAX = 2000;
   const { isDarkMode, toggleDarkMode } = useTheme();
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
-  const notificationsDropdownRef = useRef<HTMLDivElement>(null);
+  const { currentUser, userId, handleLogout } = useCurrentUser();
+  const { ref: profileDropdownRef } = useClickOutside(() => setShowProfileDropdown(false));
   const feedRef = useRef<FeedRef>(null);
-  const userId = getCurrentUserIdFromToken();
 
 
 
-  async function loadCurrentUser() {
-    if (userId) {
-      try {
-        const user = await getUser(userId);
-        setCurrentUser(user);
-      } catch (error) {
-        console.error('Failed to load current user:', error);
-      }
-    }
-  }
-
-  async function loadNotifications() {
-    if (!userId) return;
-
-    setNotificationsLoading(true);
-    try {
-      const [notificationsData, unreadData] = await Promise.all([
-        getNotifications(userId),
-        getUnreadNotificationCount(userId),
-      ]);
-      setNotifications(notificationsData);
-      setUnreadCount(unreadData.count);
-    } catch (error) {
-      console.error('Failed to load notifications:', error);
-    } finally {
-      setNotificationsLoading(false);
-    }
-  }
-
-  async function handleMarkAllAsRead() {
-    if (!userId) return;
-
-    try {
-      await markAllNotificationsAsRead(userId);
-      setUnreadCount(0);
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch (error) {
-      console.error('Failed to mark notifications as read:', error);
-    }
-  }
-
-  // UPDATED: navigate to post from notification click
-  async function handleNotificationClick(notification: any) {
-    if (!userId) return;
-
-    try {
-      if (!notification.isRead) {
-        await markNotificationAsRead(notification.id, userId);
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n)),
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
-
-      setShowNotificationsDropdown(false);
-
-      if (notification.post?.id) {
-        navigate(`/post/${notification.post.id}${notification.comment?.id ? `?comment=${notification.comment.id}` : ''}`);
-      }
-    } catch (error) {
-      console.error('Failed to handle notification click:', error);
-    }
-  }
 
 
-  useEffect(() => {
-    loadCurrentUser();
-    loadNotifications();
-  }, [userId]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
-        setShowProfileDropdown(false);
-      }
-      if (
-        notificationsDropdownRef.current &&
-        !notificationsDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowNotificationsDropdown(false);
-      }
-    };
 
-    if (showProfileDropdown || showNotificationsDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showProfileDropdown, showNotificationsDropdown]);
 
 
   const handleUpdatePost = (postId: number, updatedPost: Post) => {
@@ -165,10 +60,6 @@ export default function PostsPage() {
     // Handled by Feed component internally
   };
 
-  const handleLogout = () => {
-    setAuthToken(null);
-    window.location.href = '/auth';
-  };
 
   const handleCreatePost = async () => {
     if (!postTitle.trim() || !postContent.trim()) {
@@ -186,6 +77,7 @@ export default function PostsPage() {
       toast.success('Post created successfully!');
       // Refresh the feed to show the new post
       feedRef.current?.refresh();
+      // Note: Notifications will auto-refresh via polling
     } catch (error: any) {
       console.error('Failed to create post:', error);
       const message = error?.response?.data?.message || 'Failed to create post';
@@ -307,86 +199,7 @@ export default function PostsPage() {
             </Button>
 
             {/* Notifications Button */}
-            <div className="relative" ref={notificationsDropdownRef}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-10 w-10 p-0 relative"
-                onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
-              >
-                <Bell className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </Button>
-
-              {showNotificationsDropdown && (
-                <div className="absolute right-0 top-11 w-80 bg-background border border-border rounded-lg shadow-lg z-50">
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-foreground">Notifications</h3>
-                      {unreadCount > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleMarkAllAsRead}
-                          className="text-xs h-6 px-2"
-                        >
-                          Mark all read
-                        </Button>
-                      )}
-                    </div>
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
-                      {notificationsLoading ? (
-                        <div className="text-sm text-muted-foreground">Loading...</div>
-                      ) : notifications.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">No notifications</div>
-                      ) : (
-                        notifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${
-                              !notification.isRead
-                                ? 'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800'
-                                : 'bg-muted/30 border-border'
-                            }`}
-                            onClick={() => handleNotificationClick(notification)}
-                          >
-                            <div className="flex items-start gap-2">
-                              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 overflow-hidden">
-                                {notification.actor?.avatar ? (
-                                  <img
-                                    src={`http://localhost:3005${notification.actor.avatar}`}
-                                    alt="Avatar"
-                                    className="w-full h-full rounded-full object-cover"
-                                  />
-                                ) : notification.actor?.name ? (
-                                  notification.actor.name.charAt(0).toUpperCase()
-                                ) : (
-                                  'U'
-                                )}
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-sm text-foreground">{notification.message}</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {new Date(notification.created_at).toLocaleDateString()} at{' '}
-                                  {new Date(notification.created_at).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <NotificationButton userId={userId} />
 
             {/* Dark/Light Mode Toggle */}
             <Button variant="ghost" size="sm" className="h-10 w-10 p-0" onClick={toggleDarkMode}>
@@ -471,7 +284,7 @@ export default function PostsPage() {
           currentUser={currentUser}
           onUpdatePost={handleUpdatePost}
           onDeletePost={handleDeletePost}
-          onCommentAdded={loadNotifications}
+          onCommentAdded={() => {}}
         />
 
       </div>

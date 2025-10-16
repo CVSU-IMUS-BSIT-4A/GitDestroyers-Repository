@@ -32,7 +32,6 @@ export class NotificationsService {
     const recipient = await this.userRepository.findOne({ where: { id: recipientId } });
     const actor = await this.userRepository.findOne({ where: { id: actorId } });
     
-    console.log('Found users:', { recipient: !!recipient, actor: !!actor });
     
     if (!recipient) {
       throw new Error(`Recipient user with id ${recipientId} not found`);
@@ -58,7 +57,6 @@ export class NotificationsService {
         message = `${actor.name || actor.email} interacted with your post`;
     }
 
-    console.log('Generated message:', message);
 
     const notification = this.notificationRepository.create({
       recipient,
@@ -70,7 +68,6 @@ export class NotificationsService {
     });
 
     const saved = await this.notificationRepository.save(notification);
-    console.log('Notification saved:', saved.id);
     
     return saved;
   }
@@ -111,5 +108,30 @@ export class NotificationsService {
     return this.notificationRepository.count({
       where: { recipient: { id: userId }, isRead: false },
     });
+  }
+
+  async markAsUnread(id: number, userId: number): Promise<Notification> {
+    const notification = await this.notificationRepository.findOne({
+      where: { id, recipient: { id: userId } },
+    });
+
+    if (!notification) {
+      throw new Error('Notification not found');
+    }
+
+    notification.isRead = false;
+    return this.notificationRepository.save(notification);
+  }
+
+  async deleteNotification(id: number, userId: number): Promise<void> {
+    const notification = await this.notificationRepository.findOne({
+      where: { id, recipient: { id: userId } },
+    });
+
+    if (!notification) {
+      throw new Error('Notification not found');
+    }
+
+    await this.notificationRepository.remove(notification);
   }
 }

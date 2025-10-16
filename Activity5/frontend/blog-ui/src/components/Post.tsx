@@ -1,49 +1,31 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { getCurrentUserIdFromToken, getUser, getPost } from '../api';
+import { getPost } from '../api';
 import { useTheme } from '../hooks/useTheme';
+import { useCurrentUser } from '../hooks/useCurrentUser';
+import { useClickOutside } from '../hooks/useClickOutside';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { ArrowLeft, Sun, Moon, Bell, ChevronDown, Settings, LogOut } from 'lucide-react';
+import { ArrowLeft, Sun, Moon, ChevronDown, Settings, LogOut } from 'lucide-react';
 import PostCard from './PostCard';
+import { toast } from 'sonner';
+import NotificationButton from './NotificationButton';
 import type { Post } from '../api';
 
-interface User {
-  id: number;
-  name?: string;
-  email?: string;
-  bio?: string;
-  avatar?: string;
-  created_at?: string;
-}
 
 export default function Post() {
   const { postId } = useParams<{ postId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isDarkMode, toggleDarkMode } = useTheme();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { currentUser, userId, handleLogout } = useCurrentUser();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
-  const notificationsDropdownRef = useRef<HTMLDivElement>(null);
-  const userId = getCurrentUserIdFromToken();
+  const { ref: profileDropdownRef } = useClickOutside(() => setShowProfileDropdown(false));
   
   // Get comment ID from URL query parameters
   const highlightCommentId = searchParams.get('comment') ? parseInt(searchParams.get('comment')!) : undefined;
-
-  async function loadCurrentUser() {
-    if (!userId) return;
-    
-    try {
-      const userData = await getUser(userId);
-      setCurrentUser(userData);
-    } catch (error) {
-      console.error('Failed to load current user:', error);
-    }
-  }
 
   async function loadPost() {
     if (!postId) return;
@@ -60,38 +42,9 @@ export default function Post() {
     }
   }
 
-  function handleLogout() {
-    localStorage.removeItem('token');
-    navigate('/auth');
-  }
-
-  useEffect(() => {
-    loadCurrentUser();
-  }, [userId]);
-
   useEffect(() => {
     loadPost();
   }, [postId]);
-
-  // Handle click outside dropdowns
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (notificationsDropdownRef.current && !notificationsDropdownRef.current.contains(event.target as Node)) {
-        setShowNotificationsDropdown(false);
-      }
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
-        setShowProfileDropdown(false);
-      }
-    };
-
-    if (showNotificationsDropdown || showProfileDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showNotificationsDropdown, showProfileDropdown]);
 
   if (!postId) {
     return (
@@ -157,29 +110,7 @@ export default function Post() {
           </div>
           <div className="flex items-center gap-3">
             {/* Notifications Button */}
-            <div className="relative" ref={notificationsDropdownRef}>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-10 w-10 p-0"
-                onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
-              >
-                <Bell className="h-4 w-4" />
-              </Button>
-              
-              {showNotificationsDropdown && (
-                <div className="absolute right-0 top-11 w-80 bg-background border border-border rounded-lg shadow-lg z-50">
-                  <div className="p-4">
-                    <h3 className="font-semibold mb-3 text-foreground">Notifications</h3>
-                    <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">
-                        No new notifications
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <NotificationButton userId={userId} />
 
             {/* Dark/Light Mode Toggle */}
             <Button
@@ -274,7 +205,7 @@ export default function Post() {
             onDelete={() => navigate('/')} 
             onCommentAdded={() => loadPost()} 
             autoOpenComments={true}
-            disableDialog={true}
+            disableDialog={true} 
             truncateContent={false}
             highlightCommentId={highlightCommentId} 
           />

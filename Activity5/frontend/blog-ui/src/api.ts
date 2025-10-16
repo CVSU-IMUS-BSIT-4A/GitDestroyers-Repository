@@ -177,3 +177,13 @@ export async function markNotificationAsRead(notificationId: number, userId: num
   return res.data;
 }
 
+export async function markNotificationAsUnread(notificationId: number, userId: number) {
+  const res = await api.post<any>(`/notifications/${notificationId}/unread`);
+  return res.data;
+}
+
+export async function deleteNotification(notificationId: number, userId: number) {
+  const res = await api.post<{ message: string }>(`/notifications/${notificationId}/delete`);
+  return res.data;
+}
+

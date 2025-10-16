@@ -16,6 +16,7 @@ function AppContent() {
     }
   }, [isDarkMode]);
 
+
   return (
     <BrowserRouter>
       <Routes>
@@ -24,6 +25,8 @@ function AppContent() {
         <Route path="/user" element={<Protected><UserPage /></Protected>} />
         <Route path="/profile" element={<Protected><Profile /></Protected>} />
         <Route path="/post/:postId" element={<Protected><Post /></Protected>} />
+        {/* Catch-all route - redirect to home */}
+        <Route path="*" element={<Protected><PostsPage /></Protected>} />
       </Routes>
       <Toaster 
         position="bottom-right" 
