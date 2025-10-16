@@ -274,7 +274,8 @@ export default function Post() {
             onDelete={() => navigate('/')} 
             onCommentAdded={() => loadPost()} 
             autoOpenComments={true}
-            disableDialog={true} 
+            disableDialog={true}
+            truncateContent={false}
             highlightCommentId={highlightCommentId} 
           />
         </div>

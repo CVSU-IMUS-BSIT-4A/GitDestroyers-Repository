@@ -5,6 +5,7 @@ export { default as UserPage } from './UserPage';
 export { default as Profile } from './Profile';
 export { default as Post } from './Post';
 export { default as Protected } from './Protected';
+export { default as Feed } from './Feed';
 
 // Reusable components
 export { default as PostCard } from './PostCard';

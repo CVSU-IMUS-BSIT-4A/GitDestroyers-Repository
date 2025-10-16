@@ -25,7 +25,15 @@ function AppContent() {
         <Route path="/profile" element={<Protected><Profile /></Protected>} />
         <Route path="/post/:postId" element={<Protected><Post /></Protected>} />
       </Routes>
-      <Toaster position="top-center" />
+      <Toaster 
+        position="bottom-right" 
+        toastOptions={{
+          style: {
+            margin: '8px',
+            maxWidth: '250px',
+          },
+        }}
+      />
     </BrowserRouter>
   );
 }

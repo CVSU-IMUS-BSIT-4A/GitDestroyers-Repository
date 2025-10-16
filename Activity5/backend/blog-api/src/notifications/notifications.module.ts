@@ -16,3 +16,5 @@ import { NotificationsController } from './notifications.controller';
   exports: [NotificationsService],
 })
 export class NotificationsModule {}
+
+

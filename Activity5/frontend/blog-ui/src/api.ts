@@ -5,7 +5,7 @@ export const api = axios.create({ baseURL: 'http://localhost:3005' });
 export type LoginResponse = { accessToken: string };
 export type UserRef = { id: number; name?: string; email?: string; bio?: string; avatar?: string; created_at?: string };
 export type Comment = { id: number; text: string; author?: UserRef | null };
-export type Post = { id: number; title: string; content: string; author?: UserRef | null; comments?: Comment[] };
+export type Post = { id: number; title: string; content: string; author?: UserRef | null; comments?: Comment[]; created_at?: string };
 
 export function setAuthToken(token: string | null) {
   if (token) {

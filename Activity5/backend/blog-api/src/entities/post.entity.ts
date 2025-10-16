@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn } from 'typeorm';
 import { User } from './user.entity';
 import { Comment } from './comment.entity';
 import { Like } from './like.entity';
@@ -22,6 +22,9 @@ export class Post {
 
   @OneToMany(() => Like, (l) => l.post)
   likes?: Like[];
+
+  @CreateDateColumn()
+  created_at!: Date;
 }
 
 

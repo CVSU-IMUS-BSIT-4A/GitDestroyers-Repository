@@ -7,12 +7,22 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Alert, AlertDescription } from './ui/alert';
 import { Field, FieldContent, FieldLabel, FieldError } from './ui/field';
-import { Eye, EyeOff, Sun, Moon } from 'lucide-react';
+import { Eye, EyeOff, Sun, Moon, ChevronDownIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Calendar } from './ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface FormErrors {
   email?: string;
   name?: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  dob?: string;
   password?: string;
+  confirmPassword?: string;
   general?: string;
 }
 
@@ -21,11 +31,17 @@ export default function AuthPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [gender, setGender] = useState('');
+  const [dob, setDob] = useState<Date | undefined>(undefined);
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [dobOpen, setDobOpen] = useState(false);
   const navigate = useNavigate();
 
   // Validation functions
@@ -42,6 +58,11 @@ export default function AuthPage() {
     return undefined;
   };
 
+  const validateRequired = (label: string, value: string): string | undefined => {
+    if (!value || !value.toString().trim()) return `${label} is required`;
+    return undefined;
+  };
+
   const validatePassword = (password: string): string | undefined => {
     if (!password) return 'Password is required';
     if (password.length < 6) return 'Password must be at least 6 characters';
@@ -53,9 +74,19 @@ export default function AuthPage() {
     
     newErrors.email = validateEmail(email);
     if (mode === 'register') {
-      newErrors.name = validateName(name);
+      newErrors.firstName = validateName(firstName);
+      newErrors.lastName = validateName(lastName);
+      newErrors.gender = validateRequired('Gender', gender);
+      newErrors.dob = dob ? undefined : 'Date of Birth is required';
     }
     newErrors.password = validatePassword(password);
+    if (mode === 'register') {
+      newErrors.confirmPassword = !confirmPassword
+        ? 'Confirm password is required'
+        : confirmPassword !== password
+          ? 'Passwords do not match'
+          : undefined;
+    }
     
     setErrors(newErrors);
     return !Object.values(newErrors).some(error => error !== undefined);
@@ -80,14 +111,20 @@ export default function AuthPage() {
     setIsLoading(true);
     try {
       if (mode === 'register') {
-        await register(email, name, password);
+        const combinedName = `${firstName.trim()} ${lastName.trim()}`.trim();
+        await register(email, combinedName, password);
         setSuccess('Registration successful. Redirecting to login...');
         setTimeout(() => {
           setMode('login');
           setSuccess(null);
           setEmail('');
           setName('');
+          setFirstName('');
+          setLastName('');
+          setGender('');
+          setDob(undefined);
           setPassword('');
+          setConfirmPassword('');
         }, 1000);
       } else {
         const { accessToken } = await login(email, password);
@@ -153,22 +190,111 @@ export default function AuthPage() {
             </Field>
             
             {mode === 'register' && (
-              <Field>
-                <FieldLabel>Full Name</FieldLabel>
-                <FieldContent>
-                  <Input 
-                    value={name} 
-                    onChange={e => {
-                      setName(e.target.value);
-                      handleInputChange('name', e.target.value);
-                    }}
-                    placeholder="Enter your full name"
-                    className={errors.name ? 'border-destructive' : ''}
-                    required 
-                  />
-                </FieldContent>
-                <FieldError>{errors.name}</FieldError>
-              </Field>
+              <>
+                <Field>
+                  <FieldLabel>First Name</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      value={firstName}
+                      onChange={e => {
+                        setFirstName(e.target.value);
+                        handleInputChange('firstName', e.target.value);
+                      }}
+                      placeholder="Enter your first name"
+                      className={errors.firstName ? 'border-destructive' : ''}
+                      required
+                    />
+                  </FieldContent>
+                  <FieldError>{errors.firstName}</FieldError>
+                </Field>
+
+                <Field>
+                  <FieldLabel>Last Name</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      value={lastName}
+                      onChange={e => {
+                        setLastName(e.target.value);
+                        handleInputChange('lastName', e.target.value);
+                      }}
+                      placeholder="Enter your last name"
+                      className={errors.lastName ? 'border-destructive' : ''}
+                      required
+                    />
+                  </FieldContent>
+                  <FieldError>{errors.lastName}</FieldError>
+                </Field>
+
+                <Field>
+                  <FieldLabel>Gender</FieldLabel>
+                  <FieldContent>
+                    <Select
+                      value={gender}
+                      onValueChange={(val) => {
+                        setGender(val);
+                        handleInputChange('gender', val);
+                      }}
+                    >
+                      <SelectTrigger
+                        className={`w-full ${errors.gender ? 'aria-invalid' : ''}`}
+                        aria-invalid={!!errors.gender}
+                      >
+                        <SelectValue placeholder="Select your gender" />
+                      </SelectTrigger>
+                      <SelectContent align="start">
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                        <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FieldContent>
+                  <FieldError>{errors.gender}</FieldError>
+                </Field>
+
+                <Field>
+                  <FieldLabel>Date of Birth</FieldLabel>
+                  <FieldContent>
+                    <Popover open={dobOpen} onOpenChange={setDobOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          id="date"
+                          className={cn(
+                            "w-full justify-between font-normal",
+                            !dob && "text-muted-foreground",
+                            errors.dob ? 'border-destructive' : ''
+                          )}
+                        >
+                          {dob ? dob.toLocaleDateString() : "Select date"}
+                          <ChevronDownIcon />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="min-w-[250px] w-[280px] p-0"
+                        align="start"
+                      >
+                        <Calendar
+                          className="bg-popover rounded-md p-3 [--cell-size:2.7rem] w-full"
+                          mode="single"
+                          selected={dob}
+                          captionLayout="dropdown"
+                          fromYear={1900}
+                          toYear={new Date().getFullYear()}
+                          defaultMonth={dob ?? new Date(2000, 0, 1)}
+                          onSelect={(date) => {
+                            setDob(date || undefined);
+                            handleInputChange('dob', date ? date.toISOString() : '');
+                            setDobOpen(false);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </FieldContent>
+                  <FieldError>{errors.dob}</FieldError>
+                </Field>
+              </>
             )}
             
             <Field>
@@ -201,6 +327,26 @@ export default function AuthPage() {
               </FieldContent>
               <FieldError>{errors.password}</FieldError>
             </Field>
+
+            {mode === 'register' && (
+              <Field>
+                <FieldLabel>Confirm Password</FieldLabel>
+                <FieldContent>
+                  <Input
+                    value={confirmPassword}
+                    onChange={e => {
+                      setConfirmPassword(e.target.value);
+                      handleInputChange('confirmPassword', e.target.value);
+                    }}
+                    type="password"
+                    placeholder="Re-enter your password"
+                    className={errors.confirmPassword ? 'border-destructive' : ''}
+                    required
+                  />
+                </FieldContent>
+                <FieldError>{errors.confirmPassword}</FieldError>
+              </Field>
+            )}
             
             {errors.general && (
               <Alert variant="destructive">
@@ -230,22 +376,30 @@ export default function AuthPage() {
             </Button>
           </form>
           
-          <div className="mt-6 text-center">
-            <Button 
-              variant="ghost" 
-              onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-              className="text-sm"
-            >
-              {mode === 'login' ? (
-                <>
-                  Don't have an account? <span className="text-primary font-medium">Sign up</span>
-                </>
-              ) : (
-                <>
-                  Already have an account? <span className="text-primary font-medium">Sign in</span>
-                </>
-              )}
-            </Button>
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            {mode === 'login' ? (
+              <>
+                Don't have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setMode('register')}
+                  className="text-primary font-medium hover:underline"
+                >
+                  Sign up
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setMode('login')}
+                  className="text-primary font-medium hover:underline"
+                >
+                  Sign in
+                </button>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

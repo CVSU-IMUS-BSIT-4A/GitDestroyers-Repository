@@ -19,3 +19,4 @@ export default function Protected({ children }: ProtectedProps) {
 
   return <>{children}</>;
 }
+

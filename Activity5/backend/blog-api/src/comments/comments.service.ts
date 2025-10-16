@@ -1,99 +1,138 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Comment } from '../entities/comment.entity';
 import { User } from '../entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../entities/notification.entity';
+import { Post } from '../entities/post.entity'; // <-- make sure this exists
 
 @Injectable()
 export class CommentsService {
   constructor(
     @InjectRepository(Comment) private readonly repo: Repository<Comment>,
     @InjectRepository(User) private readonly users: Repository<User>,
+    @InjectRepository(Post) private readonly posts: Repository<Post>,
     private readonly notificationsService: NotificationsService,
   ) {}
 
   async findAll(page = 1, pageSize = 10) {
+    if (page < 1 || pageSize < 1) {
+      throw new BadRequestException('Invalid pagination params');
+    }
+
     const [data, total] = await this.repo.findAndCount({
-      relations: ['author', 'post'],
+      relations: { author: true, post: { author: true } },
       skip: (page - 1) * pageSize,
       take: pageSize,
       order: { id: 'DESC' },
     });
+
     return { data, total, page, pageSize };
   }
 
   async findOne(id: number) {
-    const comment = await this.repo.findOne({ 
-      where: { id }, 
-      relations: ['author', 'post', 'post.author'] 
+    const comment = await this.repo.findOne({
+      where: { id },
+      relations: { author: true, post: { author: true } },
     });
     if (!comment) throw new NotFoundException('Comment not found');
     return comment;
   }
 
-  async create(data: { text: string; postId: number }, authorId: number) {
-    const author = await this.users.findOne({ where: { id: authorId } });
-    const comment = this.repo.create({ text: data.text, post: { id: data.postId } as any, author: author || null });
-    const saved = await this.repo.save(comment);
-    
-    const fullComment = await this.findOne(saved.id);
-    
-    console.log('Comment created:', {
-      commentId: saved.id,
-      authorId,
-      postId: data.postId,
-      postAuthorId: fullComment.post?.author?.id,
-      hasPost: !!fullComment.post,
-      hasPostAuthor: !!fullComment.post?.author,
-      postAuthorName: fullComment.post?.author?.name,
-      postAuthorEmail: fullComment.post?.author?.email
+  async create(
+    data: { text: string; postId: number },
+    authorId: number,
+  ) {
+    if (!data?.text?.trim()) {
+      throw new BadRequestException('Text is required');
+    }
+    if (!data?.postId) {
+      throw new BadRequestException('postId is required');
+    }
+
+    const [author, post] = await Promise.all([
+      this.users.findOne({ where: { id: authorId } }),
+      this.posts.findOne({
+        where: { id: data.postId },
+        relations: { author: true },
+      }),
+    ]);
+
+    if (!author) throw new NotFoundException('Author not found');
+    if (!post) throw new NotFoundException('Post not found');
+
+    const comment = this.repo.create({
+      text: data.text.trim(),
+      post,
+      author,
     });
-    
-    if (fullComment.post?.author?.id && fullComment.post.author.id !== authorId) {
+
+    const saved = await this.repo.save(comment);
+    const fullComment = await this.findOne(saved.id);
+
+    // Only notify the post author if different from the commenter
+    const postAuthorId = post.author?.id;
+    if (postAuthorId && postAuthorId !== authorId) {
       try {
-        console.log('Creating notification for post author:', {
-          postAuthorId: fullComment.post.author.id,
-          commentAuthorId: authorId,
-          postId: data.postId,
-          commentId: saved.id
-        });
         await this.notificationsService.createNotification(
-          fullComment.post.author.id,
+          postAuthorId,
           authorId,
           NotificationType.COMMENT,
-          data.postId,
-          saved.id
+          post.id,
+          saved.id,
         );
-        console.log('Notification created successfully');
-      } catch (error) {
-        console.error('Failed to create notification:', error);
-        console.error('Error details:', error.message);
-        // Don't fail the comment creation if notification fails
+      } catch (error: any) {
+        // Don’t fail the request if notifications fail
+        // (optionally log with a logger)
       }
-    } else {
-      console.log('No notification created - either no post author or same user');
     }
-    
+
     return fullComment;
   }
 
-  async update(id: number, data: Partial<{ text: string }>, userId: number) {
-    const existing = await this.repo.findOne({ where: { id }, relations: ['author'] });
+  async update(
+    id: number,
+    data: Partial<{ text: string }>,
+    userId: number,
+  ) {
+    if (data.text !== undefined && !data.text.trim()) {
+      throw new BadRequestException('Text cannot be empty');
+    }
+
+    const existing = await this.repo.findOne({
+      where: { id },
+      relations: { author: true },
+    });
     if (!existing) throw new NotFoundException('Comment not found');
-    if (existing.author && existing.author.id !== userId) throw new ForbiddenException('Not your comment');
-    await this.repo.update(id, data);
+
+    // Require ownership; if author is missing, disallow edits
+    if (!existing.author || existing.author.id !== userId) {
+      throw new ForbiddenException('Not your comment');
+    }
+
+    await this.repo.update(id, { ...data, text: data.text?.trim() });
     return this.findOne(id);
   }
 
   async remove(id: number, userId: number) {
-    const existing = await this.repo.findOne({ where: { id }, relations: ['author'] });
+    const existing = await this.repo.findOne({
+      where: { id },
+      relations: { author: true },
+    });
     if (!existing) throw new NotFoundException('Comment not found');
-    if (existing.author && existing.author.id !== userId) throw new ForbiddenException('Not your comment');
+
+    // Require ownership; if author is missing, disallow deletes
+    if (!existing.author || existing.author.id !== userId) {
+      throw new ForbiddenException('Not your comment');
+    }
+
     await this.repo.delete(id);
     return { deleted: true };
   }
 }
-
-

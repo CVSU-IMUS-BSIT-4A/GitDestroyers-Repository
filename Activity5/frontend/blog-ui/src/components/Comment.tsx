@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { updateComment, deleteComment, toggleCommentLike, getCommentLikeCounts, getUserCommentLikeStatus } from '../api';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { MoreHorizontal, Edit, Trash2, Heart, ThumbsDown } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CommentProps {
   comment: {
     id: number;
     text: string;
+    created_at?: string;
     author?: {
       id: number;
       name?: string;
@@ -19,12 +22,15 @@ interface CommentProps {
   userId?: number;
   onUpdate: (commentId: number, updatedComment: any) => void;
   onDelete: (commentId: number) => void;
+  className?: string;
+  containerRef?: (el: HTMLDivElement | null) => void;
 }
 
-export default function Comment({ comment, userId, onUpdate, onDelete }: CommentProps) {
+export default function Comment({ comment, userId, onUpdate, onDelete, className, containerRef }: CommentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text);
   const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
@@ -74,14 +80,28 @@ export default function Comment({ comment, userId, onUpdate, onDelete }: Comment
   }, [showMenu]);
 
   const handleSave = async () => {
-    const updated = await updateComment(comment.id, { text: editText });
-    onUpdate(comment.id, updated);
-    setIsEditing(false);
+    try {
+      const updated = await updateComment(comment.id, { text: editText });
+      onUpdate(comment.id, updated);
+      setIsEditing(false);
+      toast.success('Comment updated successfully!');
+    } catch (error) {
+      console.error('Failed to update comment:', error);
+      toast.error('Failed to update comment');
+    }
   };
 
   const handleDelete = async () => {
-    await deleteComment(comment.id);
-    onDelete(comment.id);
+    try {
+      await deleteComment(comment.id);
+      onDelete(comment.id);
+      toast.success('Comment deleted');
+    } catch (error: any) {
+      console.error('Failed to delete comment:', error);
+      const message = error?.response?.data?.message || 'Failed to delete comment';
+      toast.error(typeof message === 'string' ? message : 'Failed to delete comment');
+      throw error;
+    }
   };
 
   const handleLike = async () => {
@@ -128,8 +148,28 @@ export default function Comment({ comment, userId, onUpdate, onDelete }: Comment
     }
   };
 
+  const formatTimeAgo = (dateString: string) => {
+    const commentDate = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - commentDate.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays < 1) {
+      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+      if (diffInHours < 1) {
+        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        return `${diffInMinutes}m ago`;
+      }
+      return `${diffInHours}h ago`;
+    } else if (diffInDays < 7) {
+      return `${diffInDays}d ago`;
+    } else {
+      return commentDate.toLocaleDateString();
+    }
+  };
+
   return (
-    <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+    <div ref={containerRef} className={`flex items-start gap-3 p-3 bg-muted/30 rounded-lg ${className || ''}`}>
       <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 overflow-hidden">
         {comment.author?.avatar ? (
           <img 
@@ -144,9 +184,12 @@ export default function Comment({ comment, userId, onUpdate, onDelete }: Comment
       </div>
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
-          <Badge variant="secondary" className="text-xs">
+          <span className="text-sm font-medium text-foreground">
             {comment.author?.name || comment.author?.email || 'Unknown'}
-          </Badge>
+          </span>
+        </div>
+        <div className="text-xs text-muted-foreground mb-2">
+          {comment.created_at ? formatTimeAgo(comment.created_at) : ''}
         </div>
         {isEditing ? (
           <div className="space-y-2">
@@ -173,7 +216,7 @@ export default function Comment({ comment, userId, onUpdate, onDelete }: Comment
           </div>
         ) : (
           <>
-            <p className="text-sm">{comment.text}</p>
+            <p className="text-sm break-words">{comment.text}</p>
             
             {/* Like/Dislike Buttons */}
             <div className="flex items-center gap-4 mt-2">
@@ -232,8 +275,8 @@ export default function Comment({ comment, userId, onUpdate, onDelete }: Comment
                   size="sm"
                   className="w-full justify-start gap-2 text-destructive hover:text-destructive"
                   onClick={() => {
-                    handleDelete();
                     setShowMenu(false);
+                    setShowDeleteDialog(true);
                   }}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -244,6 +287,31 @@ export default function Comment({ comment, userId, onUpdate, onDelete }: Comment
           )}
         </div>
       )}
+      {/* Delete Comment Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete comment?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete this comment.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
+            <Button
+              className="text-destructive"
+              onClick={async () => {
+                try {
+                  await handleDelete();
+                  setShowDeleteDialog(false);
+                } catch {}
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
