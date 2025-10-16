@@ -22,7 +22,7 @@ export class UsersService {
     return await this.repo.save(user);
   }
 
-  async update(id: number, data: Partial<{ email: string; name: string }>) {
+  async update(id: number, data: Partial<{ email: string; name: string; bio: string; avatar: string }>) {
     await this.repo.update(id, data);
     return this.findOne(id);
   }
