@@ -5,6 +5,7 @@ import {
 } from '../api';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
@@ -42,8 +43,8 @@ export default function PostsPage() {
   const feedRef = useRef<FeedRef>(null);
   const { open, setOpen, openDialog } = useSettingsDialog();
 
-
-
+  // Set page title
+  useDocumentTitle('Home');
 
 
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '../api';
 import { useTheme } from '../hooks/useTheme';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -28,7 +29,11 @@ interface FormErrors {
 
 export default function AuthPage() {
   const { isDarkMode, toggleDarkMode } = useTheme();
+  
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  
+  // Set page title
+  useDocumentTitle(mode === 'login' ? 'Sign In' : 'Sign Up');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [firstName, setFirstName] = useState('');

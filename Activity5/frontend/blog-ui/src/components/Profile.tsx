@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { listPosts, updateUser, uploadAvatar } from '../api';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -21,6 +22,9 @@ import type { Post } from '../api';
 export default function Profile() {
   const { currentUser, userId, handleLogout, loading } = useCurrentUser();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  
+  // Set page title with user's name
+  useDocumentTitle(currentUser?.name ? `${currentUser.name}'s Profile` : 'Profile');
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

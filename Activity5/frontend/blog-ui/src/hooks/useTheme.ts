@@ -2,12 +2,10 @@ import { useEffect, useState } from 'react';
 
 export function useTheme() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check localStorage first, then system preference
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       return savedTheme === 'dark';
     }
-    // Check system preference
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
@@ -32,12 +30,10 @@ export function useTheme() {
     }
   }, [isDarkMode]);
 
-  // Listen for system theme changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
     const handleChange = (e: MediaQueryListEvent) => {
-      // Only update if user hasn't set a preference
       if (!localStorage.getItem('theme')) {
         setIsDarkMode(e.matches);
       }

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { getPost } from '../api';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { ArrowLeft, ChevronDown, Settings, LogOut } from 'lucide-react';
@@ -27,6 +28,9 @@ export default function Post() {
   
   // Get comment ID from URL query parameters
   const highlightCommentId = searchParams.get('comment') ? parseInt(searchParams.get('comment')!) : undefined;
+
+  // Set page title based on post
+  useDocumentTitle(post?.title || 'Loading...');
 
   async function loadPost() {
     if (!postId) return;

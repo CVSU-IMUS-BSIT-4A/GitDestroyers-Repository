@@ -2,10 +2,14 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthPage, PostsPage, Profile, Post, Protected } from './components';
 import { Toaster } from './components/ui/sonner';
 import { useTheme } from './hooks/useTheme';
+import { useDocumentTitle } from './hooks/useDocumentTitle';
 import { useEffect } from 'react';
 
 function AppContent() {
   const { isDarkMode } = useTheme();
+  
+  // Set default app title
+  useDocumentTitle('');
 
   useEffect(() => {
     // Apply initial theme
