@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { listPosts, updateUser, uploadAvatar } from '../api';
-import { useTheme } from '../hooks/useTheme';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
@@ -11,14 +10,15 @@ import { Skeleton } from './ui/skeleton';
 import { Alert, AlertDescription } from './ui/alert';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { User, Mail, Calendar, Edit, LogOut, ArrowLeft, Check, X, Upload, Camera, Sun, Moon, ChevronDown, Settings } from 'lucide-react';
+import { User, Mail, Calendar, Edit, LogOut, ArrowLeft, Check, X, Upload, Camera, ChevronDown, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import NotificationButton from './NotificationButton';
+import SettingsDialog from './SettingsDialog';
+import { useSettingsDialog } from '../hooks/useSettingsDialog';
 import type { Post } from '../api';
 
 
 export default function Profile() {
-  const { isDarkMode, toggleDarkMode } = useTheme();
   const { currentUser, userId, handleLogout, loading } = useCurrentUser();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
@@ -31,11 +31,9 @@ export default function Profile() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { ref: profileDropdownRef } = useClickOutside(() => setShowProfileDropdown(false));
+  const { open, setOpen, openDialog } = useSettingsDialog();
 
   useEffect(() => {
-    console.log('Profile: userId changed:', userId);
-    console.log('Profile: currentUser:', currentUser);
-    console.log('Profile: loading:', loading);
     loadUserPosts();
   }, [userId, currentUser, loading]);
 
@@ -201,20 +199,6 @@ export default function Profile() {
             {/* Notifications Button */}
             <NotificationButton userId={userId} />
 
-            {/* Dark/Light Mode Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-10 w-10 p-0"
-              onClick={toggleDarkMode}
-            >
-              {isDarkMode ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-            </Button>
-
             {/* Profile Dropdown */}
             <div className="relative" ref={profileDropdownRef}>
               <Button 
@@ -247,7 +231,7 @@ export default function Profile() {
                       className="w-full justify-start gap-2"
                       onClick={() => {
                         setShowProfileDropdown(false);
-                        window.location.href = '/user';
+                        openDialog();
                       }}
                     >
                       <Settings className="h-4 w-4" />
@@ -481,6 +465,9 @@ export default function Profile() {
           )}
         </div>
       </div>
+
+      {/* Settings Dialog mounted at page root for access from header */}
+      <SettingsDialog open={open} onOpenChange={setOpen} hideTrigger />
     </div>
   );
 }

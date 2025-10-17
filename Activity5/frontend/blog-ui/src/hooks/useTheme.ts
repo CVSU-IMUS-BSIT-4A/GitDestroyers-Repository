@@ -16,7 +16,6 @@ export function useTheme() {
     setIsDarkMode(newTheme);
     localStorage.setItem('theme', newTheme ? 'dark' : 'light');
     
-    // Apply theme to document
     if (newTheme) {
       document.documentElement.classList.add('dark');
     } else {

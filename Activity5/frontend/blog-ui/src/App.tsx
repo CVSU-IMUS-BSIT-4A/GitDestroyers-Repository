@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthPage, PostsPage, UserPage, Profile, Post, Protected } from './components';
+import { AuthPage, PostsPage, Profile, Post, Protected } from './components';
 import { Toaster } from './components/ui/sonner';
 import { useTheme } from './hooks/useTheme';
 import { useEffect } from 'react';
@@ -22,7 +22,7 @@ function AppContent() {
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/" element={<Protected><PostsPage /></Protected>} />
-        <Route path="/user" element={<Protected><UserPage /></Protected>} />
+        {/* UserPage route removed */}
         <Route path="/profile" element={<Protected><Profile /></Protected>} />
         <Route path="/post/:postId" element={<Protected><Post /></Protected>} />
         {/* Catch-all route - redirect to home */}

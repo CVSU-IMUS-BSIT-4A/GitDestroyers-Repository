@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { getPost } from '../api';
-import { useTheme } from '../hooks/useTheme';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { ArrowLeft, Sun, Moon, ChevronDown, Settings, LogOut } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Settings, LogOut } from 'lucide-react';
 import PostCard from './PostCard';
 import { toast } from 'sonner';
 import NotificationButton from './NotificationButton';
+import SettingsDialog from './SettingsDialog';
+import { useSettingsDialog } from '../hooks/useSettingsDialog';
 import type { Post } from '../api';
 
 
@@ -17,8 +18,8 @@ export default function Post() {
   const { postId } = useParams<{ postId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isDarkMode, toggleDarkMode } = useTheme();
   const { currentUser, userId, handleLogout } = useCurrentUser();
+  const { open, setOpen, openDialog } = useSettingsDialog();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -35,7 +36,6 @@ export default function Post() {
       const postData = await getPost(parseInt(postId));
       setPost(postData);
     } catch (error) {
-      console.error('Failed to load post:', error);
       setPost(null);
     } finally {
       setLoading(false);
@@ -112,20 +112,6 @@ export default function Post() {
             {/* Notifications Button */}
             <NotificationButton userId={userId} />
 
-            {/* Dark/Light Mode Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-10 w-10 p-0"
-              onClick={toggleDarkMode}
-            >
-              {isDarkMode ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-            </Button>
-
             {/* Profile Dropdown */}
             <div className="relative" ref={profileDropdownRef}>
               <Button 
@@ -169,7 +155,7 @@ export default function Post() {
                       className="w-full justify-start gap-2"
                       onClick={() => {
                         setShowProfileDropdown(false);
-                        navigate('/user');
+                        openDialog();
                       }}
                     >
                       <Settings className="h-4 w-4" />
@@ -211,6 +197,9 @@ export default function Post() {
           />
         </div>
       </div>
+
+      {/* Settings Dialog mounted at page root for access from header */}
+      <SettingsDialog open={open} onOpenChange={setOpen} hideTrigger />
     </div>
   );
 }

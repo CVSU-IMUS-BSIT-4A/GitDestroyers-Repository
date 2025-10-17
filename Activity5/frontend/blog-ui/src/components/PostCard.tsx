@@ -7,6 +7,7 @@ import {
   toggleLike,
   getPostLikeCounts,
   getUserLikeStatus,
+  getPostHistory,
 } from '../api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
@@ -15,9 +16,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Field, FieldContent, FieldLabel } from './ui/field';
-import { MoreHorizontal, Edit, Trash2, Heart, MessageCircle, ThumbsDown } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Heart, MessageCircle, ThumbsDown, History } from 'lucide-react';
 import Comment from './Comment';
 import type { Post } from '../api';
+import { ScrollArea } from './ui/scroll-area';
+import { HistoryDialog } from './index';
 
 interface PostCardProps {
   post: Post;
@@ -64,6 +67,8 @@ export default function PostCard({
   const [isDisliked, setIsDisliked] = useState(false);
   const [likesLoading, setLikesLoading] = useState(false);
   const [scrolledToComment, setScrolledToComment] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [hasHistory, setHasHistory] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const commentRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
@@ -138,11 +143,42 @@ export default function PostCard({
     loadLikesData();
   }, [post.id, userId]);
 
+  // Check if post has edit history
+  useEffect(() => {
+    const checkHistory = async () => {
+      try {
+        const history = await getPostHistory(post.id);
+        setHasHistory(history.length > 0);
+      } catch (error) {
+        console.error('Failed to check post history:', error);
+        setHasHistory(false);
+      }
+    };
+
+    checkHistory();
+  }, [post.id]);
+
+  // Re-check history when post content changes (for updates from other users)
+  useEffect(() => {
+    const checkHistory = async () => {
+      try {
+        const history = await getPostHistory(post.id);
+        setHasHistory(history.length > 0);
+      } catch (error) {
+        console.error('Failed to check post history:', error);
+        setHasHistory(false);
+      }
+    };
+
+    checkHistory();
+  }, [post.title, post.content]);
+
   const handleSavePost = async () => {
     try {
       const updated = await updatePost(post.id, { title: editTitle, content: editContent });
       onUpdate(post.id, updated);
       setIsEditing(false);
+      setHasHistory(true);
       toast.success('Post updated successfully!');
     } catch (error) {
       console.error('Failed to update post:', error);
@@ -330,48 +366,64 @@ export default function PostCard({
               <CardTitle className="text-xl mt-3 break-all">{post.title}</CardTitle>
             </div>
 
-            {isOwner && (
-              <div className="relative" ref={menuRef}>
+            <div className="flex items-center gap-2">
+              {/* History button - only show if post has been edited */}
+              {hasHistory && (
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0"
-                  onClick={() => setShowMenu(!showMenu)}
+                  onClick={() => setShowHistoryDialog(true)}
+                  title="View edit history"
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <History className="h-4 w-4" />
                 </Button>
-                {showMenu && (
-                  <div className="absolute right-0 top-8 z-50 w-48 bg-background border border-border rounded-lg shadow-lg">
-                    <div className="p-1 space-y-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start gap-2"
-                        onClick={() => {
-                          setIsEditing(true);
-                          setShowMenu(false);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                        Edit Post
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start gap-2 text-destructive hover:text-destructive"
-                        onClick={() => {
-                          setShowMenu(false);
-                          setShowDeletePostDialog(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete Post
-                      </Button>
+              )}
+
+              {/* Owner menu - only for post owner */}
+              {isOwner && (
+                <div className="relative" ref={menuRef}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setShowMenu(!showMenu)}
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                  {showMenu && (
+                    <div className="absolute right-0 top-8 z-50 w-48 bg-background border border-border rounded-lg shadow-lg">
+                      <div className="p-1 space-y-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start gap-2"
+                          onClick={() => {
+                            setIsEditing(true);
+                            setShowMenu(false);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                          Edit Post
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start gap-2 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setShowMenu(false);
+                            setShowDeletePostDialog(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete Post
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </CardHeader>
@@ -454,29 +506,31 @@ export default function PostCard({
             <h3 className="text-lg font-semibold mb-4">Comments ({commentCount})</h3>
 
             {/* Comments List */}
-            <div className="space-y-4 mb-6">
-              {allComments.map((comment) => (
-                <Comment
-                  key={comment.id}
-                  comment={comment}
-                  userId={userId}
-                  className={`p-4 rounded-lg border bg-muted/30 border-border transition-all duration-300 ease-in-out ${
-                    effectiveFocusId === comment.id ? 'ring-2 ring-blue-500' : ''
-                  }`}
-                  containerRef={(el) => (commentRefs.current[comment.id] = el)}
-                  onUpdate={(commentId, updatedComment) => {
-                    const updatedComments = allComments.map((c) =>
-                      c.id === commentId ? updatedComment : c
-                    );
-                    onUpdate(post.id, { ...post, comments: updatedComments });
-                  }}
-                  onDelete={(commentId) => {
-                    const updatedComments = allComments.filter((c) => c.id !== commentId);
-                    onUpdate(post.id, { ...post, comments: updatedComments });
-                  }}
-                />
-              ))}
-            </div>
+            <ScrollArea className="h-[420px] px-2 mt-3">
+              <div className="space-y-6 mb-6 py-2">
+                {allComments.map((comment) => (
+                  <Comment
+                    key={comment.id}
+                    comment={comment}
+                    userId={userId}
+                  className={`p-3 rounded-md border bg-muted/20 border-border transition-all duration-300 ease-in-out ${
+                      effectiveFocusId === comment.id ? 'ring-2 ring-blue-500' : ''
+                    }`}
+                    containerRef={(el) => (commentRefs.current[comment.id] = el)}
+                    onUpdate={(commentId, updatedComment) => {
+                      const updatedComments = allComments.map((c) =>
+                        c.id === commentId ? updatedComment : c
+                      );
+                      onUpdate(post.id, { ...post, comments: updatedComments });
+                    }}
+                    onDelete={(commentId) => {
+                      const updatedComments = allComments.filter((c) => c.id !== commentId);
+                      onUpdate(post.id, { ...post, comments: updatedComments });
+                    }}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
 
             {/* Add Comment Form */}
             {userId && (
@@ -540,6 +594,13 @@ export default function PostCard({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <HistoryDialog
+        open={showHistoryDialog}
+        onOpenChange={setShowHistoryDialog}
+        type="post"
+        itemId={post.id}
+      />
     </Card>
   );
 }

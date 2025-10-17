@@ -41,6 +41,11 @@ export class CommentsController {
   remove(@Param('id') id: string, @Req() req: any) {
     return this.comments.remove(Number(id), req.user?.userId);
   }
+
+  @Get(':id/history')
+  getHistory(@Param('id') id: string) {
+    return this.comments.getHistory(Number(id));
+  }
 }
 
 

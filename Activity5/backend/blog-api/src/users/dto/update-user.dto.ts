@@ -12,6 +12,17 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   bio?: string;
+
+  @IsOptional()
+  @IsString()
+  password?: string;
+
+  // Used only for verification when changing password
+  @IsOptional()
+  @IsString()
+  currentPassword?: string;
 }
+
+
 
 

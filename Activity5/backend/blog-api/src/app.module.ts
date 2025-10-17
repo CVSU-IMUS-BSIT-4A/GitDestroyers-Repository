@@ -13,6 +13,8 @@ import { Comment } from './entities/comment.entity';
 import { Like } from './entities/like.entity';
 import { CommentLike } from './entities/comment-like.entity';
 import { Notification } from './entities/notification.entity';
+import { PostHistory } from './entities/post-history.entity';
+import { CommentHistory } from './entities/comment-history.entity';
 import { AuthModule } from './auth/auth.module';
 
 @Module({
@@ -20,7 +22,7 @@ import { AuthModule } from './auth/auth.module';
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: 'blog.db',
-              entities: [User, Post, Comment, Like, CommentLike, Notification],
+              entities: [User, Post, Comment, Like, CommentLike, Notification, PostHistory, CommentHistory],
       synchronize: true,
     }),
     UsersModule,

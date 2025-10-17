@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Comment } from '../entities/comment.entity';
 import { User } from '../entities/user.entity';
+import { CommentHistory } from '../entities/comment-history.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../entities/notification.entity';
 import { Post } from '../entities/post.entity'; // <-- make sure this exists
@@ -18,6 +19,7 @@ export class CommentsService {
     @InjectRepository(Comment) private readonly repo: Repository<Comment>,
     @InjectRepository(User) private readonly users: Repository<User>,
     @InjectRepository(Post) private readonly posts: Repository<Post>,
+    @InjectRepository(CommentHistory) private readonly historyRepo: Repository<CommentHistory>,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -116,6 +118,15 @@ export class CommentsService {
       throw new ForbiddenException('Not your comment');
     }
 
+    // Create history entry before updating
+    const historyEntry = this.historyRepo.create({
+      commentId: id,
+      editorId: userId,
+      previousContent: existing.text,
+      newContent: data.text?.trim() || existing.text,
+    });
+    await this.historyRepo.save(historyEntry);
+
     await this.repo.update(id, { ...data, text: data.text?.trim() });
     return this.findOne(id);
   }
@@ -134,5 +145,13 @@ export class CommentsService {
 
     await this.repo.delete(id);
     return { deleted: true };
+  }
+
+  async getHistory(commentId: number) {
+    return this.historyRepo.find({
+      where: { commentId },
+      relations: ['editor'],
+      order: { editedAt: 'DESC' },
+    });
   }
 }

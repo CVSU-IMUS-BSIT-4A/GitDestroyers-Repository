@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { updateComment, deleteComment, toggleCommentLike, getCommentLikeCounts, getUserCommentLikeStatus } from '../api';
+import { updateComment, deleteComment, toggleCommentLike, getCommentLikeCounts, getUserCommentLikeStatus, getCommentHistory } from '../api';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
-import { MoreHorizontal, Edit, Trash2, Heart, ThumbsDown } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Heart, ThumbsDown, History } from 'lucide-react';
 import { toast } from 'sonner';
+import { HistoryDialog } from './index';
 
 interface CommentProps {
   comment: {
@@ -36,6 +37,8 @@ export default function Comment({ comment, userId, onUpdate, onDelete, className
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [likesLoading, setLikesLoading] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [hasHistory, setHasHistory] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isOwner = comment.author && userId === comment.author.id;
@@ -63,6 +66,36 @@ export default function Comment({ comment, userId, onUpdate, onDelete, className
     loadLikesData();
   }, [comment.id, userId]);
 
+  // Check if comment has edit history
+  useEffect(() => {
+    const checkHistory = async () => {
+      try {
+        const history = await getCommentHistory(comment.id);
+        setHasHistory(history.length > 0);
+      } catch (error) {
+        console.error('Failed to check comment history:', error);
+        setHasHistory(false);
+      }
+    };
+
+    checkHistory();
+  }, [comment.id]);
+
+  // Re-check history when comment content changes (for updates from other users)
+  useEffect(() => {
+    const checkHistory = async () => {
+      try {
+        const history = await getCommentHistory(comment.id);
+        setHasHistory(history.length > 0);
+      } catch (error) {
+        console.error('Failed to check comment history:', error);
+        setHasHistory(false);
+      }
+    };
+
+    checkHistory();
+  }, [comment.text]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -84,6 +117,8 @@ export default function Comment({ comment, userId, onUpdate, onDelete, className
       const updated = await updateComment(comment.id, { text: editText });
       onUpdate(comment.id, updated);
       setIsEditing(false);
+      // History will be created by the backend, so show the button immediately
+      setHasHistory(true);
       toast.success('Comment updated successfully!');
     } catch (error) {
       console.error('Failed to update comment:', error);
@@ -245,44 +280,62 @@ export default function Comment({ comment, userId, onUpdate, onDelete, className
           </>
         )}
       </div>
-      {isOwner && !isEditing && (
-        <div className="relative" ref={menuRef}>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 w-8 p-0"
-            onClick={() => setShowMenu(!showMenu)}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-          {showMenu && (
-            <div className="absolute right-0 top-8 z-50 w-40 bg-background border border-border rounded-lg shadow-lg">
-              <div className="p-1 space-y-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start gap-2"
-                  onClick={() => {
-                    setIsEditing(true);
-                    setShowMenu(false);
-                  }}
-                >
-                  <Edit className="h-4 w-4" />
-                  Edit
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start gap-2 text-destructive hover:text-destructive"
-                  onClick={() => {
-                    setShowMenu(false);
-                    setShowDeleteDialog(true);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </Button>
-              </div>
+      {!isEditing && (
+        <div className="flex items-center gap-1">
+          {/* History button - only show if comment has been edited */}
+          {hasHistory && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => setShowHistoryDialog(true)}
+              title="View edit history"
+            >
+              <History className="h-4 w-4" />
+            </Button>
+          )}
+
+          {/* Owner menu - only for comment owner */}
+          {isOwner && (
+            <div className="relative" ref={menuRef}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 w-8 p-0"
+                onClick={() => setShowMenu(!showMenu)}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+              {showMenu && (
+                <div className="absolute right-0 top-8 z-50 w-40 bg-background border border-border rounded-lg shadow-lg">
+                  <div className="p-1 space-y-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start gap-2"
+                      onClick={() => {
+                        setIsEditing(true);
+                        setShowMenu(false);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start gap-2 text-destructive hover:text-destructive"
+                      onClick={() => {
+                        setShowMenu(false);
+                        setShowDeleteDialog(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -312,6 +365,13 @@ export default function Comment({ comment, userId, onUpdate, onDelete, className
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <HistoryDialog
+        open={showHistoryDialog}
+        onOpenChange={setShowHistoryDialog}
+        type="comment"
+        itemId={comment.id}
+      />
     </div>
   );
 }

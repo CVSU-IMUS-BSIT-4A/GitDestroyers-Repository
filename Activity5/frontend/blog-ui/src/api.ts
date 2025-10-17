@@ -6,6 +6,8 @@ export type LoginResponse = { accessToken: string };
 export type UserRef = { id: number; name?: string; email?: string; bio?: string; avatar?: string; created_at?: string };
 export type Comment = { id: number; text: string; author?: UserRef | null };
 export type Post = { id: number; title: string; content: string; author?: UserRef | null; comments?: Comment[]; created_at?: string };
+export type PostHistory = { id: number; postId: number; editorId: number; previousTitle: string; previousContent: string; newTitle: string; newContent: string; editedAt: string; editor?: UserRef };
+export type CommentHistory = { id: number; commentId: number; editorId: number; previousContent: string; newContent: string; editedAt: string; editor?: UserRef };
 
 export function setAuthToken(token: string | null) {
   if (token) {
@@ -96,7 +98,7 @@ export async function getUser(id: number) {
   return res.data;
 }
 
-export async function updateUser(id: number, data: Partial<{ name: string; email: string; password: string; bio: string }>) {
+export async function updateUser(id: number, data: Partial<{ name: string; email: string; password: string; bio: string; currentPassword: string }>) {
   const res = await api.patch<UserRef>(`/users/${id}`, data);
   return res.data;
 }
@@ -184,6 +186,17 @@ export async function markNotificationAsUnread(notificationId: number, userId: n
 
 export async function deleteNotification(notificationId: number, userId: number) {
   const res = await api.post<{ message: string }>(`/notifications/${notificationId}/delete`);
+  return res.data;
+}
+
+// History API
+export async function getPostHistory(postId: number) {
+  const res = await api.get<PostHistory[]>(`/posts/${postId}/history`);
+  return res.data;
+}
+
+export async function getCommentHistory(commentId: number) {
+  const res = await api.get<CommentHistory[]>(`/comments/${commentId}/history`);
   return res.data;
 }
 

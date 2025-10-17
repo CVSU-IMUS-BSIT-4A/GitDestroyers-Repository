@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   createPost,
 } from '../api';
-import { useTheme } from '../hooks/useTheme';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { Button } from './ui/button';
@@ -17,12 +16,12 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  Sun,
-  Moon,
   Home,
   Plus,
 } from 'lucide-react';
 import Feed, { type FeedRef } from './Feed';
+import SettingsDialog from './SettingsDialog';
+import { useSettingsDialog } from '../hooks/useSettingsDialog';
 import NotificationButton from './NotificationButton';
 import type { Post } from '../api';
 
@@ -38,10 +37,10 @@ export default function PostsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const TITLE_MAX = 120;
   const CONTENT_MAX = 2000;
-  const { isDarkMode, toggleDarkMode } = useTheme();
   const { currentUser, userId, handleLogout } = useCurrentUser();
   const { ref: profileDropdownRef } = useClickOutside(() => setShowProfileDropdown(false));
   const feedRef = useRef<FeedRef>(null);
+  const { open, setOpen, openDialog } = useSettingsDialog();
 
 
 
@@ -200,12 +199,6 @@ export default function PostsPage() {
 
             {/* Notifications Button */}
             <NotificationButton userId={userId} />
-
-            {/* Dark/Light Mode Toggle */}
-            <Button variant="ghost" size="sm" className="h-10 w-10 p-0" onClick={toggleDarkMode}>
-              {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-
             {/* Profile Dropdown */}
             <div className="relative" ref={profileDropdownRef}>
               <Button
@@ -251,7 +244,7 @@ export default function PostsPage() {
                       className="w-full justify-start gap-2"
                       onClick={() => {
                         setShowProfileDropdown(false);
-                        window.location.href = '/user';
+                        openDialog();
                       }}
                     >
                       <Settings className="h-4 w-4" />
@@ -288,6 +281,9 @@ export default function PostsPage() {
         />
 
       </div>
+
+      {/* Settings Dialog mounted at page root for access from header */}
+      <SettingsDialog open={open} onOpenChange={setOpen} hideTrigger />
     </div>
   );
 }

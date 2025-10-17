@@ -27,7 +27,6 @@ export class NotificationsService {
     postId?: number,
     commentId?: number,
   ): Promise<Notification> {
-    console.log('Creating notification:', { recipientId, actorId, type, postId, commentId });
     
     const recipient = await this.userRepository.findOne({ where: { id: recipientId } });
     const actor = await this.userRepository.findOne({ where: { id: actorId } });
