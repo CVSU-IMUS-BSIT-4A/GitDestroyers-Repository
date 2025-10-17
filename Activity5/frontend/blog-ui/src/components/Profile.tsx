@@ -4,26 +4,67 @@ import { listPosts, updateUser, uploadAvatar } from '../api';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
 import { Alert, AlertDescription } from './ui/alert';
-import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { User, Mail, Calendar, Edit, LogOut, ArrowLeft, Check, X, Upload, Camera, ChevronDown, Settings } from 'lucide-react';
+import {
+  Calendar,
+  Edit,
+  LogOut,
+  ArrowLeft,
+  Check,
+  X,
+  Camera,
+  ChevronDown,
+  Settings
+} from 'lucide-react';
 import { toast } from 'sonner';
 import NotificationButton from './NotificationButton';
 import SettingsDialog from './SettingsDialog';
 import { useSettingsDialog } from '../hooks/useSettingsDialog';
 import type { Post } from '../api';
 
+const MAX_TITLE_CHARS = 50; 
+function truncateTitle(title: string, max = MAX_TITLE_CHARS) {
+  return title.length > max ? `${title.slice(0, max - 1)}…` : title;
+}
+
+function PostContentPreview({ content, postId }: { content: string; postId: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const MAX_LENGTH = 200;
+  const shouldTruncate = content.length > MAX_LENGTH;
+
+  if (!shouldTruncate) {
+    return (
+      <p className="text-foreground leading-relaxed break-words whitespace-pre-wrap overflow-wrap-anywhere">
+        {content}
+      </p>
+    );
+  }
+
+  return (
+    <div className="w-full">
+      <p className="text-foreground leading-relaxed break-words whitespace-pre-wrap overflow-wrap-anywhere">
+        {isExpanded ? content : `${content.slice(0, MAX_LENGTH)}...`}
+      </p>
+      <Button
+        variant="link"
+        size="sm"
+        className="p-0 h-auto text-primary hover:text-primary/80"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        {isExpanded ? 'See less' : 'See more'}
+      </Button>
+    </div>
+  );
+}
 
 export default function Profile() {
   const { currentUser, userId, handleLogout, loading } = useCurrentUser();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  
-  // Set page title with user's name
   useDocumentTitle(currentUser?.name ? `${currentUser.name}'s Profile` : 'Profile');
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
@@ -32,7 +73,7 @@ export default function Profile() {
   const [editBio, setEditBio] = useState('');
   const [editAvatar, setEditAvatar] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { ref: profileDropdownRef } = useClickOutside(() => setShowProfileDropdown(false));
   const { open, setOpen, openDialog } = useSettingsDialog();
@@ -43,7 +84,7 @@ export default function Profile() {
 
   async function loadUserPosts() {
     if (!userId) return;
-    
+
     try {
       setPostsLoading(true);
       const response = await listPosts();
@@ -56,12 +97,11 @@ export default function Profile() {
     }
   }
 
-
   const handleStartEdit = () => {
     setIsEditing(true);
     setEditBio(currentUser?.bio || '');
     setEditAvatar(null);
-    setError(null); 
+    setError(null);
   };
 
   const handleCancelEdit = () => {
@@ -82,7 +122,7 @@ export default function Profile() {
         setError('Image size must be less than 5MB');
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         setEditAvatar(e.target?.result as string);
@@ -93,49 +133,47 @@ export default function Profile() {
 
   const handleSaveChanges = async () => {
     if (!currentUser) return;
-    
+
     setIsSaving(true);
-    setError(null); 
-    
+    setError(null);
+
     try {
       let bioUpdated = false;
       let avatarUpdated = false;
-      
-      const updateData: any = {};
+
+      const updateData: Record<string, unknown> = {};
       if (editBio !== currentUser.bio) {
         updateData.bio = editBio;
         bioUpdated = true;
       }
 
       if (Object.keys(updateData).length > 0) {
-        const updatedUser = await updateUser(currentUser.id, updateData);
-        // Note: currentUser is managed by useCurrentUser hook
+        await updateUser(currentUser.id, updateData);
       }
-      
+
       const fileInput = fileInputRef.current;
       if (fileInput && fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
-        const updatedUser = await uploadAvatar(currentUser.id, file);
-        // Note: currentUser is managed by useCurrentUser hook
+        await uploadAvatar(currentUser.id, file);
         avatarUpdated = true;
       }
-      
+
       if (bioUpdated || avatarUpdated) {
-        toast.success("Profile updated successfully!", {
-          description: "Your profile has been saved."
+        toast.success('Profile updated successfully!', {
+          description: 'Your profile has been saved.'
         });
       }
-      
+
       setIsEditing(false);
       setEditBio('');
       setEditAvatar(null);
     } catch (err: any) {
       console.error('Failed to update profile:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to update profile';
+      const errorMessage =
+        err.response?.data?.message || err.message || 'Failed to update profile';
       setError(errorMessage);
-      
-      // Show error toast
-      toast.error("Failed to update profile", {
+
+      toast.error('Failed to update profile', {
         description: errorMessage
       });
     } finally {
@@ -205,27 +243,30 @@ export default function Profile() {
 
             {/* Profile Dropdown */}
             <div className="relative" ref={profileDropdownRef}>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-10 px-2 flex items-center gap-2"
                 onClick={() => setShowProfileDropdown(!showProfileDropdown)}
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm overflow-hidden">
                   {currentUser?.avatar ? (
-                    <img 
-                      src={`http://localhost:3005${currentUser.avatar}`} 
-                      alt="Avatar" 
+                    <img
+                      src={`http://localhost:3005${currentUser.avatar}`}
+                      alt="Avatar"
                       className="w-full h-full rounded-full object-cover"
                     />
+                  ) : currentUser?.name ? (
+                    currentUser.name.charAt(0).toUpperCase()
+                  ) : currentUser?.email ? (
+                    currentUser.email.charAt(0).toUpperCase()
                   ) : (
-                    currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 
-                    currentUser?.email ? currentUser.email.charAt(0).toUpperCase() : 'U'
+                    'U'
                   )}
                 </div>
                 <ChevronDown className="h-4 w-4" />
               </Button>
-              
+
               {showProfileDropdown && (
                 <div className="absolute right-0 top-11 w-48 bg-background border border-border rounded-lg shadow-lg z-50">
                   <div className="p-1 space-y-1">
@@ -268,20 +309,23 @@ export default function Profile() {
               <div className="relative">
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-2xl overflow-hidden">
                   {editAvatar ? (
-                    <img 
-                      src={editAvatar} 
-                      alt="Avatar Preview" 
+                    <img
+                      src={editAvatar}
+                      alt="Avatar Preview"
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : currentUser?.avatar ? (
-                    <img 
-                      src={`http://localhost:3005${currentUser.avatar}`} 
-                      alt="Avatar" 
+                    <img
+                      src={`http://localhost:3005${currentUser.avatar}`}
+                      alt="Avatar"
                       className="w-full h-full rounded-full object-cover"
                     />
+                  ) : currentUser?.name ? (
+                    currentUser.name.charAt(0).toUpperCase()
+                  ) : currentUser?.email ? (
+                    currentUser.email.charAt(0).toUpperCase()
                   ) : (
-                    currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 
-                    currentUser?.email ? currentUser.email.charAt(0).toUpperCase() : 'U'
+                    'U'
                   )}
                 </div>
                 {isEditing && (
@@ -308,9 +352,9 @@ export default function Profile() {
                     {currentUser?.name || 'No Name Set'}
                   </CardTitle>
                   {!isEditing && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                       onClick={handleStartEdit}
                     >
@@ -333,11 +377,7 @@ export default function Profile() {
                       </Alert>
                     )}
                     <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        onClick={handleSaveChanges}
-                        disabled={isSaving}
-                      >
+                      <Button size="sm" onClick={handleSaveChanges} disabled={isSaving}>
                         {isSaving ? (
                           <div className="flex items-center gap-2">
                             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
@@ -350,9 +390,9 @@ export default function Profile() {
                           </>
                         )}
                       </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={handleCancelEdit}
                         disabled={isSaving}
                       >
@@ -443,25 +483,28 @@ export default function Profile() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {userPosts.map(post => (
-                <Card key={post.id}>
+              {userPosts.map((post) => (
+                <Card key={post.id} className="overflow-hidden">
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-xl">{post.title}</CardTitle>
-                        <CardDescription>
-                          Post ID: {post.id}
-                        </CardDescription>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg mb-2">
+                          <Link
+                            to={`/post/${post.id}`}
+                            className="text-primary hover:underline hover:text-primary/80 transition-colors block line-clamp-2 break-words"
+                            title={post.title}
+                          >
+                            {truncateTitle(post.title)}
+                          </Link>
+                        </CardTitle>
                       </div>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="flex-shrink-0">
                         {post.comments?.length || 0} comments
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-foreground leading-relaxed line-clamp-3">
-                      {post.content}
-                    </p>
+                  <CardContent className="overflow-hidden">
+                    <PostContentPreview content={post.content} postId={post.id} />
                   </CardContent>
                 </Card>
               ))}
@@ -475,5 +518,3 @@ export default function Profile() {
     </div>
   );
 }
-
-
