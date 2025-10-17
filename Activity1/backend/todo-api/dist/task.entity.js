@@ -16,6 +16,9 @@ let Task = class Task {
     title;
     description;
     completed;
+    completedAt;
+    dueDate;
+    priority;
     createdAt;
     updatedAt;
 };
@@ -36,6 +39,18 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'boolean', default: false }),
     __metadata("design:type", Boolean)
 ], Task.prototype, "completed", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Object)
+], Task.prototype, "completedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Object)
+], Task.prototype, "dueDate", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', default: 'medium' }),
+    __metadata("design:type", String)
+], Task.prototype, "priority", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ type: 'datetime' }),
     __metadata("design:type", Date)

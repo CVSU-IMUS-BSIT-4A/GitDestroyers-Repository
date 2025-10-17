@@ -14,6 +14,15 @@ export class Task {
   @Column({ type: 'boolean', default: false })
   completed: boolean;
 
+  @Column({ type: 'datetime', nullable: true })
+  completedAt?: Date | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  dueDate?: Date | null;
+
+  @Column({ type: 'text', default: 'medium' })
+  priority: 'low' | 'medium' | 'high';
+
   @CreateDateColumn({ type: 'datetime' })
   createdAt: Date;
 

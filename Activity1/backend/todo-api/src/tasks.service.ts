@@ -17,6 +17,9 @@ export class TasksService {
       title: createDto.title,
       description: createDto.description ?? null,
       completed: createDto.completed ?? false,
+      completedAt: createDto.completed ? new Date() : null,
+      dueDate: createDto.dueDate ? new Date(createDto.dueDate) : null,
+      priority: createDto.priority ?? 'medium',
     });
     return await this.taskRepository.save(newTask);
   }
@@ -35,7 +38,12 @@ export class TasksService {
     const task = await this.findOne(id);
     if (updateDto.title !== undefined) task.title = updateDto.title;
     if (updateDto.description !== undefined) task.description = updateDto.description;
-    if (updateDto.completed !== undefined) task.completed = updateDto.completed;
+    if (updateDto.completed !== undefined) {
+      task.completed = updateDto.completed;
+      task.completedAt = updateDto.completed ? new Date() : null;
+    }
+    if (updateDto.dueDate !== undefined) task.dueDate = updateDto.dueDate ? new Date(updateDto.dueDate) : null;
+    if (updateDto.priority !== undefined) task.priority = updateDto.priority;
     return await this.taskRepository.save(task);
   }
 
