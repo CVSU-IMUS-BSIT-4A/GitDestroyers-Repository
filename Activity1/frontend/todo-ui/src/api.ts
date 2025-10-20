@@ -9,6 +9,9 @@ export type Task = {
   title: string;
   description?: string | null;
   completed: boolean;
+  completedAt?: string | null;
+  dueDate?: string | null;
+  priority: 'low' | 'medium' | 'high';
   createdAt: string;
   updatedAt: string;
 };

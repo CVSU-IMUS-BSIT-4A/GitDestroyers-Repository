@@ -41,6 +41,11 @@ export class PostsController {
   remove(@Param('id') id: string, @Req() req: any) {
     return this.posts.remove(Number(id), req.user?.userId);
   }
+
+  @Get(':id/history')
+  getHistory(@Param('id') id: string) {
+    return this.posts.getHistory(Number(id));
+  }
 }
 
 

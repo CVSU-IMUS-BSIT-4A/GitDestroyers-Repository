@@ -28,7 +28,7 @@ npm run dev
 - Validation via `class-validator`
 - SQLite database auto-synced via TypeORM
 - CORS enabled for local dev
-- Simple React UI to add/edit/delete/toggle tasks
+- React UI: add/edit/delete/toggle tasks, select mode with bulk actions, priority and due dates, light/dark theme, spring animations, delete confirmation modal
 
 ## API Endpoints
 - `POST /tasks`
@@ -36,5 +36,13 @@ npm run dev
 - `GET /tasks/:id`
 - `PATCH /tasks/:id`
 - `DELETE /tasks/:id`
+
+## Members
+- BUNAG, PERCY S.
+- AGUILON, ADRIANE
+- IRENEA, JOHN MICHAEL A.
+- FACTOR, FRANCIS C.
+- FORTALIZA, DESTINE APRIL D.
+- DELA CRUZ, JOHN MARK C.
 
 
