@@ -51,7 +51,7 @@ export default function Account() {
         <h4>Change password</h4>
         <input type="password" placeholder="Current password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required />
         <input type="password" placeholder="New password (min 6 chars)" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={6} />
-        <button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Change password'}</button>
+  <button type="submit" className="btn btn-primary btn-sm" disabled={loading}>{loading ? 'Saving...' : 'Change password'}</button>
       </form>
 
       {message && <div className="account-message">{message}</div>}

@@ -16,9 +16,12 @@ let Note = class Note {
     id;
     title;
     content;
+    category;
+    folder;
     user;
     createdAt;
     updatedAt;
+    deletedAt;
 };
 exports.Note = Note;
 __decorate([
@@ -34,6 +37,14 @@ __decorate([
     __metadata("design:type", Object)
 ], Note.prototype, "content", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 100, nullable: true }),
+    __metadata("design:type", Object)
+], Note.prototype, "category", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 100, nullable: true }),
+    __metadata("design:type", Object)
+], Note.prototype, "folder", void 0);
+__decorate([
     (0, typeorm_1.ManyToOne)(() => user_entity_1.User, (user) => user.notes, { onDelete: 'CASCADE' }),
     __metadata("design:type", user_entity_1.User)
 ], Note.prototype, "user", void 0);
@@ -45,6 +56,10 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)({ type: 'datetime' }),
     __metadata("design:type", Date)
 ], Note.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Object)
+], Note.prototype, "deletedAt", void 0);
 exports.Note = Note = __decorate([
     (0, typeorm_1.Entity)({ name: 'notes' })
 ], Note);

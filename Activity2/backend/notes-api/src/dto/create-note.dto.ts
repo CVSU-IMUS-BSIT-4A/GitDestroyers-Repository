@@ -9,6 +9,16 @@ export class CreateNoteDto {
   @IsString()
   @IsOptional()
   content?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  category?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  folder?: string;
 }
 
 

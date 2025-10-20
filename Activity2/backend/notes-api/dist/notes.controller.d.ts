@@ -11,4 +11,8 @@ export declare class NotesController {
     remove(req: any, id: number): Promise<{
         success: boolean;
     }>;
+    restore(req: any, id: number): Promise<import("./entities/note.entity").Note>;
+    removePermanent(req: any, id: number): Promise<{
+        success: boolean;
+    }>;
 }

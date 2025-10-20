@@ -7,7 +7,10 @@ export declare class NotesService {
     constructor(notes: Repository<Note>);
     create(userId: number, dto: CreateNoteDto): Promise<Note>;
     findAll(userId: number): Promise<Note[]>;
+    findTrashed(userId: number): Promise<Note[]>;
     findOne(userId: number, id: number): Promise<Note>;
     update(userId: number, id: number, dto: UpdateNoteDto): Promise<Note>;
     remove(userId: number, id: number): Promise<void>;
+    restore(userId: number, id: number): Promise<Note>;
+    removePermanent(userId: number, id: number): Promise<void>;
 }

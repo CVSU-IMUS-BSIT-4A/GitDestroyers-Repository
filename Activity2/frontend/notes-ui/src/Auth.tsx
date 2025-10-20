@@ -58,7 +58,7 @@ export default function Auth({ onAuthed }: Props) {
       <form onSubmit={handleSubmit} className="auth-form">
         <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
         <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
-        <button type="submit" disabled={loading}>{loading ? 'Please wait...' : (mode === 'login' ? 'Login' : 'Create account')}</button>
+  <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Please wait...' : (mode === 'login' ? 'Login' : 'Create account')}</button>
       </form>
 
       <div style={{ marginTop: 8 }}>
@@ -66,7 +66,7 @@ export default function Auth({ onAuthed }: Props) {
       </div>
 
       <div className="auth-toggle">
-        <button className="ghost" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
+        <button className="btn btn-ghost" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
           {mode === 'login' ? 'Need an account? Register' : 'Have an account? Login'}
         </button>
       </div>

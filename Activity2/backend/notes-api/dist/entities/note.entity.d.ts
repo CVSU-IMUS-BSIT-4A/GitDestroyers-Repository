@@ -3,7 +3,10 @@ export declare class Note {
     id: number;
     title: string;
     content?: string | null;
+    category?: string | null;
+    folder?: string | null;
     user: User;
     createdAt: Date;
     updatedAt: Date;
+    deletedAt?: Date | null;
 }

@@ -14,6 +14,8 @@ const class_validator_1 = require("class-validator");
 class UpdateNoteDto {
     title;
     content;
+    category;
+    folder;
 }
 exports.UpdateNoteDto = UpdateNoteDto;
 __decorate([
@@ -27,4 +29,16 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Object)
 ], UpdateNoteDto.prototype, "content", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", Object)
+], UpdateNoteDto.prototype, "category", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", Object)
+], UpdateNoteDto.prototype, "folder", void 0);
 //# sourceMappingURL=update-note.dto.js.map
