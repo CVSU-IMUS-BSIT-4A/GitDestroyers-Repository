@@ -14,6 +14,8 @@ export async function login(email: string, password: string): Promise<string> {
 
 export type Note = { id: number; title: string; content?: string | null; createdAt: string; updatedAt: string };
 
+export type CurrentUser = { id: number; email: string; createdAt: string };
+
 export function setAuth(token: string | null) {
   if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   else delete api.defaults.headers.common['Authorization'];
@@ -36,6 +38,16 @@ export async function updateNote(id: number, payload: Partial<Pick<Note, 'title'
 
 export async function deleteNote(id: number) {
   await api.delete(`/notes/${id}`);
+}
+
+export async function getCurrentUser(): Promise<CurrentUser> {
+  const { data } = await api.get<CurrentUser>('/users/me');
+  return data;
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  const { data } = await api.patch('/users/me/password', { currentPassword, newPassword });
+  return data;
 }
 
 

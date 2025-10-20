@@ -1,7 +1,9 @@
-import { FormEvent, useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { createNote, deleteNote, fetchNotes, setAuth, updateNote } from './api';
 import type { Note } from './api';
 import './notes.css';
+import Account from './Account';
 
 type Props = { token: string; onLogout: () => void };
 
@@ -10,6 +12,7 @@ export default function Dashboard({ token, onLogout }: Props) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAccount, setShowAccount] = useState(false);
 
   useEffect(() => {
     setAuth(token);
@@ -44,6 +47,7 @@ export default function Dashboard({ token, onLogout }: Props) {
         </div>
         <div className="notes-header-right">
           <div className="notes-count">{notes.length} notes</div>
+          <button className="btn-ghost" onClick={() => setShowAccount(s => !s)}>{showAccount ? 'Close' : 'Account'}</button>
           <button
             className="btn-ghost"
             onClick={() => {
@@ -56,6 +60,8 @@ export default function Dashboard({ token, onLogout }: Props) {
           </button>
         </div>
       </div>
+
+      {showAccount && <Account />}
 
       <div className="notes-toolbar">
         <input className="notes-search" placeholder="Search notes by title or content..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
