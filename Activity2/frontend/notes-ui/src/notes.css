@@ -102,6 +102,24 @@
   .notes-container{margin-top:8px;padding:16px}
 }
 
+/* Layout: keep header + form fixed and allow notes list to scroll to avoid layout shifts on resize */
+.notes-main{display:flex;flex-direction:column;gap:12px}
+.notes-count-above{display:flex;align-items:center}
+.notes-count-above .notes-count{margin-right:12px}
+
+.notes-list-wrapper{flex:1 1 auto;overflow:auto;padding-right:6px}
+.notes-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:0;padding:0}
+
+/* Ensure the form doesn't grow unexpectedly */
+.notes-form{flex:0 0 auto}
+
+/* Small-screen adjustments keep wrapper scrollable */
+@media (max-width:720px){
+  .notes-list-wrapper{max-height:60vh}
+}
+
+
+
 /* Button and input micro-interactions and keyframes */
 .notes-form button:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(124,58,237,0.14)}
 .btn-ghost{transition:transform .12s,background .12s,border-color .12s}

@@ -117,15 +117,7 @@ export default function Dashboard({ token, onLogout }: Props) {
           <div className="notes-subtitle">A tidy place to capture thoughts — fast and beautiful.</div>
         </div>
         <div className="notes-header-right">
-          <div className="notes-count">{notes.length} notes</div>
-          <button className="btn btn-ghost" onClick={() => { if (!showAccount) setShowAccount(true); else { setModalClosing(true); setTimeout(()=>{ setShowAccount(false); setModalClosing(false); }, 220); } }}>{showAccount ? 'Close' : 'Account'}</button>
-          <button
-            className="btn btn-ghost"
-            onClick={() => setShowLogoutConfirm(true)}
-            aria-label="Logout"
-          >
-            Logout
-          </button>
+          {/* header actions removed per request */}
         </div>
       </div>
 
@@ -153,10 +145,27 @@ export default function Dashboard({ token, onLogout }: Props) {
         </div>
       )}
 
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
-        <div className="notes-toolbar" style={{flex:1}}>
-        <input className="notes-search" placeholder="Search notes by title or content..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-        <select className="filter-select" value={filterCategory ?? ''} onChange={e => setFilterCategory(e.target.value || null)}>
+      <div className="notes-main">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
+          <div className="notes-count-above">
+            <div className="notes-count">{notes.length} notes</div>
+          </div>
+          <div className="notes-header-right">
+            <button className="btn btn-ghost" onClick={() => { if (!showAccount) setShowAccount(true); else { setModalClosing(true); setTimeout(()=>{ setShowAccount(false); setModalClosing(false); }, 220); } }}>{showAccount ? 'Close' : 'Account'}</button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setShowLogoutConfirm(true)}
+              aria-label="Logout"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
+          <div className="notes-toolbar" style={{flex:1}}>
+            <input className="notes-search" placeholder="Search notes by title or content..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+            <select className="filter-select" value={filterCategory ?? ''} onChange={e => setFilterCategory(e.target.value || null)}>
           <option value="">All categories</option>
           {[...new Set(notes.map(n => n.category).filter(Boolean) as string[])].map(c => (
             <option key={String(c)} value={String(c)}>{String(c)}</option>
@@ -168,11 +177,11 @@ export default function Dashboard({ token, onLogout }: Props) {
             <option key={String(f)} value={String(f)}>{String(f)}</option>
           ))}
         </select>
+          </div>
         </div>
         {/* removed toolbar trash button - moved under the form */}
-      </div>
 
-      <form onSubmit={handleAdd} className="notes-form">
+  <form onSubmit={handleAdd} className="notes-form">
         <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
         <input placeholder="Category (optional)" value={category} onChange={e => setCategory(e.target.value)} />
         <input placeholder="Folder (optional)" value={folder} onChange={e => setFolder(e.target.value)} />
@@ -185,7 +194,8 @@ export default function Dashboard({ token, onLogout }: Props) {
         </div>
       </form>
 
-      <ul className="notes-list">
+      <div className="notes-list-wrapper">
+        <ul className="notes-list">
         {notes
           .filter(n => {
             if (filterCategory && n.category !== filterCategory) return false;
@@ -197,8 +207,10 @@ export default function Dashboard({ token, onLogout }: Props) {
           .map(n => (
             <NoteItem key={n.id} note={n} view={view} onUpdate={handleUpdate} onDelete={handleDelete} onRestore={handleRestore} />
           ))}
-      </ul>
+        </ul>
+      </div>
     </div>
+  </div>
   );
 }
 
