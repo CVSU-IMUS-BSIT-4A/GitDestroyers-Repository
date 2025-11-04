@@ -3,12 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from '../entities/post.entity';
 import { User } from '../entities/user.entity';
+import { PostHistory } from '../entities/post-history.entity';
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectRepository(Post) private readonly repo: Repository<Post>,
     @InjectRepository(User) private readonly users: Repository<User>,
+    @InjectRepository(PostHistory) private readonly historyRepo: Repository<PostHistory>,
   ) {}
 
   async findAll(page = 1, pageSize = 10) {
@@ -38,6 +40,18 @@ export class PostsService {
     const existing = await this.repo.findOne({ where: { id }, relations: ['author'] });
     if (!existing) throw new NotFoundException('Post not found');
     if (existing.author && existing.author.id !== userId) throw new ForbiddenException('Not your post');
+    
+    // Create history entry before updating
+    const historyEntry = this.historyRepo.create({
+      postId: id,
+      editorId: userId,
+      previousTitle: existing.title,
+      previousContent: existing.content,
+      newTitle: data.title || existing.title,
+      newContent: data.content || existing.content,
+    });
+    await this.historyRepo.save(historyEntry);
+    
     await this.repo.update(id, data);
     return this.findOne(id);
   }
@@ -48,6 +62,14 @@ export class PostsService {
     if (existing.author && existing.author.id !== userId) throw new ForbiddenException('Not your post');
     await this.repo.delete(id);
     return { deleted: true };
+  }
+
+  async getHistory(postId: number) {
+    return this.historyRepo.find({
+      where: { postId },
+      relations: ['editor'],
+      order: { editedAt: 'DESC' },
+    });
   }
 }
 

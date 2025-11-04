@@ -23,11 +23,20 @@ let NotesService = class NotesService {
         this.notes = notes;
     }
     async create(userId, dto) {
-        const note = this.notes.create({ title: dto.title, content: dto.content ?? null, user: { id: userId } });
+        const note = this.notes.create({
+            title: dto.title,
+            content: dto.content ?? null,
+            category: dto.category ?? null,
+            folder: dto.folder ?? null,
+            user: { id: userId },
+        });
         return await this.notes.save(note);
     }
     async findAll(userId) {
-        return await this.notes.find({ where: { user: { id: userId } }, order: { createdAt: 'DESC' } });
+        return await this.notes.find({ where: { user: { id: userId }, deletedAt: (0, typeorm_2.IsNull)() }, order: { createdAt: 'DESC' } });
+    }
+    async findTrashed(userId) {
+        return await this.notes.find({ where: { user: { id: userId }, deletedAt: (0, typeorm_2.Not)((0, typeorm_2.IsNull)()) }, order: { createdAt: 'DESC' } });
     }
     async findOne(userId, id) {
         const note = await this.notes.findOne({ where: { id }, relations: { user: true } });
@@ -43,9 +52,27 @@ let NotesService = class NotesService {
             note.title = dto.title;
         if (dto.content !== undefined)
             note.content = dto.content;
+        if (dto.category !== undefined)
+            note.category = dto.category;
+        if (dto.folder !== undefined)
+            note.folder = dto.folder;
         return await this.notes.save(note);
     }
     async remove(userId, id) {
+        const note = await this.findOne(userId, id);
+        note.deletedAt = new Date();
+        await this.notes.save(note);
+    }
+    async restore(userId, id) {
+        const note = await this.notes.findOne({ where: { id }, relations: { user: true } });
+        if (!note)
+            throw new common_1.NotFoundException('Note not found');
+        if (note.user.id !== userId)
+            throw new common_1.UnauthorizedException();
+        note.deletedAt = null;
+        return await this.notes.save(note);
+    }
+    async removePermanent(userId, id) {
         const note = await this.findOne(userId, id);
         await this.notes.delete(note.id);
     }

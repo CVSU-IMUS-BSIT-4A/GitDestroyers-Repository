@@ -1,0 +1,148 @@
+/* Notes UI styles */
+:root{
+  --card-bg: rgba(255,255,255,0.05);
+  --muted: #9aa4b2;
+  --accent: #7c3aed;
+  --accent-2: #06b6d4;
+}
+
+/* shared button utilities */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1px solid transparent;font-weight:600;cursor:pointer}
+.btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;border:none;box-shadow:0 10px 30px rgba(124,58,237,0.12)}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
+.btn-danger{background:transparent;border:1px solid rgba(239,68,68,0.12);color:var(--muted)}
+
+/* small button modifier */
+.btn-sm{padding:6px 8px;font-size:0.9rem;border-radius:8px}
+
+.notes-container{width:100%;max-width:980px;margin:28px auto;padding:28px;box-sizing:border-box}
+.notes-container, .notes-container *{box-sizing:border-box}
+.notes-container{animation:fadeIn .32s ease both}
+.notes-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:18px;border-radius:14px;background:linear-gradient(90deg, rgba(124,58,237,0.12), rgba(6,182,212,0.06));box-shadow:0 8px 30px rgba(6,10,25,0.45);border:1px solid rgba(255,255,255,0.04)}
+.notes-title{font-size:1.5rem;margin:0;font-weight:700}
+.notes-subtitle{color:var(--muted);font-size:0.95rem}
+.notes-header-right{display:flex;align-items:center;gap:12px}
+/* allow header items (count, account, logout) to wrap on small screens */
+.notes-header-right{flex-wrap:wrap}
+.notes-header-right > *{flex:0 0 auto}
+.notes-count{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);font-weight:600}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:10px;color:inherit;cursor:pointer}
+
+.notes-toolbar{display:flex;justify-content:space-between;align-items:center;margin:16px 0;gap:8px}
+.notes-search{flex:1;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:inherit;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,0.02)}
+
+/* filter select styled like pills */
+.filter-select{appearance:none;-webkit-appearance:none;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:inherit;margin-left:8px;cursor:pointer;box-shadow:0 6px 18px rgba(2,6,23,0.35);transition:transform .12s,box-shadow .12s}
+.filter-select:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(2,6,23,0.45)}
+.filter-select:focus{outline:none;border-color:rgba(124,58,237,0.18)}
+.filter-select::-ms-expand{display:none}
+.filter-select::after{content:''}
+
+.notes-form{display:grid;gap:10px;margin-bottom:18px}
+.notes-form input,.notes-form textarea{width:100%;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:inherit}
+.notes-form button{padding:10px 12px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(124,58,237,0.12)}
+.notes-form .btn{justify-content:center;text-align:center}
+
+.btn[disabled], button[disabled]{opacity:0.6;cursor:not-allowed}
+
+.notes-list{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.note-card{background:var(--card-bg);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 28px rgba(2,6,23,0.45);display:flex;flex-direction:column;transition:transform .14s ease,box-shadow .14s ease;word-break:break-word}
+.note-card{opacity:0;transform:translateY(8px);animation:cardIn .42s cubic-bezier(.2,.9,.3,1) both}
+.note-card, .note-content {overflow-wrap:anywhere}
+.note-card:hover{transform:translateY(-6px) scale(1.01);box-shadow:0 18px 46px rgba(6,16,40,0.5)}
+.note-title{font-weight:800;margin-bottom:8px;font-size:1.05rem}
+.note-content{color:var(--muted);flex:1;white-space:pre-wrap}
+.note-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+.note-actions button{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;cursor:pointer}
+.note-actions button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;border:none}
+
+.edit-group{display:grid;gap:8px}
+
+.account-panel{margin:8px 0;padding:16px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08));border:1px solid rgba(255,255,255,0.08);box-shadow:0 20px 50px rgba(2,6,23,0.6)}
+.account-form{display:grid;gap:10px;margin-top:12px}
+.account-form input{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
+.account-message{margin-top:10px;color:var(--muted)}
+
+/* Make account form buttons compact and left-aligned instead of full-width */
+.account-form button { width: auto; justify-self: start; }
+.account-form .btn-sm { padding:6px 10px; font-size:0.9rem; border-radius:8px }
+
+@media (max-width:520px){
+  .notes-container{padding:16px;margin:12px}
+  .notes-form button{width:100%}
+  .notes-header{flex-direction:column;align-items:flex-start;gap:10px}
+}
+
+/* modal overlay for account popup */
+.modal-overlay{position:fixed;inset:0;background:rgba(2,6,23,0.72);display:flex;align-items:center;justify-content:center;z-index:60;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:backdrop-filter .24s ease, background .24s ease, opacity .18s ease;opacity:1}
+.modal-overlay.modal-fade-in{animation:overlayFade .22s ease both}
+.modal{background:linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08));padding:20px;border-radius:12px;min-width:320px;max-width:720px;box-shadow:0 50px 140px rgba(2,6,23,0.9);border:1px solid rgba(255,255,255,0.08)}
+.modal-close{position:absolute;top:12px;right:12px;background:transparent;border:none;color:inherit;cursor:pointer}
+
+.modal-enter{animation:modalIn .22s cubic-bezier(.2,.9,.3,1) both}
+.modal-exit{animation:modalOut .18s cubic-bezier(.2,.9,.3,1) both}
+
+/* make sure select and toolbar items wrap on small screens */
+@media (max-width:720px){
+  .notes-toolbar{flex-direction:column;align-items:stretch;gap:10px}
+  .notes-search{width:100%}
+  .filter-select{margin-left:0;width:100%}
+  .notes-header-right{width:100%;justify-content:flex-start}
+}
+
+/* further mobile stacking for very small screens: make header controls full width and allow note action buttons to wrap */
+@media (max-width:520px){
+  .notes-header-right{flex-wrap:wrap}
+  .notes-header-right > *{flex:1 1 100%;min-width:0;margin-bottom:8px}
+  .note-actions{flex-wrap:wrap;justify-content:flex-end}
+  .note-actions button{min-width:0}
+}
+
+@media (max-width:720px){
+  .notes-container{margin-top:8px;padding:16px}
+}
+
+/* Layout: keep header + form fixed and allow notes list to scroll to avoid layout shifts on resize */
+.notes-main{display:flex;flex-direction:column;gap:12px}
+.notes-count-above{display:flex;align-items:center}
+.notes-count-above .notes-count{margin-right:12px}
+
+.notes-list-wrapper{flex:1 1 auto;overflow:auto;padding-right:6px}
+.notes-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:0;padding:0}
+
+/* Ensure the form doesn't grow unexpectedly */
+.notes-form{flex:0 0 auto}
+
+/* Small-screen adjustments keep wrapper scrollable */
+@media (max-width:720px){
+  .notes-list-wrapper{max-height:60vh}
+}
+
+
+
+/* Button and input micro-interactions and keyframes */
+.notes-form button:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(124,58,237,0.14)}
+.btn-ghost{transition:transform .12s,background .12s,border-color .12s}
+.btn-ghost:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.12)}
+.notes-form input:focus, .notes-form textarea:focus, .notes-search:focus, .account-form input:focus{box-shadow:0 8px 30px rgba(124,58,237,0.06) inset, 0 2px 8px rgba(124,58,237,0.06);border-color:rgba(124,58,237,0.18);outline:none;}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px) scale(.997)}to{opacity:1;transform:none}}
+@keyframes panelIn{from{opacity:0;transform:translateY(-6px) scale(.995)}to{opacity:1;transform:none}}
+@keyframes shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+
+@keyframes modalIn{from{opacity:0;transform:translateY(-8px) scale(.995)}to{opacity:1;transform:none}}
+@keyframes modalOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-6px) scale(.997)}}
+
+@keyframes overlayFade{from{opacity:0}to{opacity:1}}
+
+/* destructive filled button for dangerous actions (Logout, Delete) */
+.btn-danger-filled{background:linear-gradient(90deg,#ef4444,#f43f5e);color:#fff;border:none;box-shadow:0 12px 36px rgba(244,63,94,0.18);padding:10px 14px;border-radius:10px;font-weight:700}
+.btn-danger-filled:hover{transform:translateY(-2px);box-shadow:0 18px 48px rgba(244,63,94,0.22)}
+
+/* helper to make modal action buttons full width on small screens */
+.modal .btn-full{min-width:140px}
+@media (max-width:520px){
+  .modal .btn-full{width:100%}
+  .modal .btn-full + .btn{margin-top:8px}
+}

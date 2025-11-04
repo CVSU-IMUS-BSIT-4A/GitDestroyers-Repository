@@ -28,6 +28,9 @@ let NotesController = class NotesController {
         return await this.notes.create(req.user.userId, dto);
     }
     async findAll(req) {
+        const trashed = req.query.trashed === '1' || req.query.trashed === 'true';
+        if (trashed)
+            return await this.notes.findTrashed(req.user.userId);
         return await this.notes.findAll(req.user.userId);
     }
     async findOne(req, id) {
@@ -38,6 +41,13 @@ let NotesController = class NotesController {
     }
     async remove(req, id) {
         await this.notes.remove(req.user.userId, id);
+        return { success: true };
+    }
+    async restore(req, id) {
+        return await this.notes.restore(req.user.userId, id);
+    }
+    async removePermanent(req, id) {
+        await this.notes.removePermanent(req.user.userId, id);
         return { success: true };
     }
 };
@@ -82,6 +92,22 @@ __decorate([
     __metadata("design:paramtypes", [Object, Number]),
     __metadata("design:returntype", Promise)
 ], NotesController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Post)(':id/restore'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:returntype", Promise)
+], NotesController.prototype, "restore", null);
+__decorate([
+    (0, common_1.Delete)(':id/permanent'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:returntype", Promise)
+], NotesController.prototype, "removePermanent", null);
 exports.NotesController = NotesController = __decorate([
     (0, swagger_1.ApiTags)('notes'),
     (0, swagger_1.ApiBearerAuth)(),

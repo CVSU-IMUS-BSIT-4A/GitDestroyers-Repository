@@ -19,6 +19,8 @@ export class NotesController {
 
   @Get()
   async findAll(@Req() req: any) {
+    const trashed = req.query.trashed === '1' || req.query.trashed === 'true';
+    if (trashed) return await this.notes.findTrashed(req.user.userId);
     return await this.notes.findAll(req.user.userId);
   }
 
@@ -39,6 +41,18 @@ export class NotesController {
   @Delete(':id')
   async remove(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
     await this.notes.remove(req.user.userId, id);
+    return { success: true };
+  }
+
+  @Post(':id/restore')
+  async restore(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
+    return await this.notes.restore(req.user.userId, id);
+  }
+
+  // permanent delete (admin/user confirm)
+  @Delete(':id/permanent')
+  async removePermanent(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
+    await this.notes.removePermanent(req.user.userId, id);
     return { success: true };
   }
 }

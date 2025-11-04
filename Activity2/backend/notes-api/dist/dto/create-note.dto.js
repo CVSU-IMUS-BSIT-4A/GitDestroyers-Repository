@@ -14,6 +14,8 @@ const class_validator_1 = require("class-validator");
 class CreateNoteDto {
     title;
     content;
+    category;
+    folder;
 }
 exports.CreateNoteDto = CreateNoteDto;
 __decorate([
@@ -27,4 +29,16 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateNoteDto.prototype, "content", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", String)
+], CreateNoteDto.prototype, "category", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", String)
+], CreateNoteDto.prototype, "folder", void 0);
 //# sourceMappingURL=create-note.dto.js.map

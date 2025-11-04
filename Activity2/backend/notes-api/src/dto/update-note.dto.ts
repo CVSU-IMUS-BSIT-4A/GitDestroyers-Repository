@@ -9,6 +9,16 @@ export class UpdateNoteDto {
   @IsString()
   @IsOptional()
   content?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  category?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  folder?: string | null;
 }
 
 

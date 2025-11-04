@@ -3,6 +3,9 @@ export declare class Task {
     title: string;
     description?: string | null;
     completed: boolean;
+    completedAt?: Date | null;
+    dueDate?: Date | null;
+    priority: 'low' | 'medium' | 'high';
     createdAt: Date;
     updatedAt: Date;
 }

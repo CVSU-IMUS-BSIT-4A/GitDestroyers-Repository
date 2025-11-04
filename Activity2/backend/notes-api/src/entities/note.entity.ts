@@ -12,6 +12,12 @@ export class Note {
   @Column({ type: 'text', nullable: true })
   content?: string | null;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  category?: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  folder?: string | null;
+
   @ManyToOne(() => User, (user) => user.notes, { onDelete: 'CASCADE' })
   user: User;
 
@@ -20,6 +26,9 @@ export class Note {
 
   @UpdateDateColumn({ type: 'datetime' })
   updatedAt: Date;
+
+  @Column({ type: 'datetime', nullable: true })
+  deletedAt?: Date | null;
 }
 
 
