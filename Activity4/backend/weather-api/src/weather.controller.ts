@@ -9,8 +9,16 @@ export class WeatherController {
 
   @Get()
   @ApiQuery({ name: 'city', required: true })
-  async get(@Query('city') city: string) {
-    return this.weather.getWeather(city);
+  @ApiQuery({ name: 'units', required: false, description: 'metric or imperial' })
+  async get(@Query('city') city: string, @Query('units') units?: string) {
+    return this.weather.getWeather(city, units || 'metric');
+  }
+
+  @Get('forecast')
+  @ApiQuery({ name: 'city', required: true })
+  @ApiQuery({ name: 'units', required: false, description: 'metric or imperial' })
+  async getForecast(@Query('city') city: string, @Query('units') units?: string) {
+    return this.weather.getForecast(city, units || 'metric');
   }
 }
 
