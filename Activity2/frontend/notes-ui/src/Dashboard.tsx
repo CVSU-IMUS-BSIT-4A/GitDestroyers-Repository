@@ -133,11 +133,11 @@ export default function Dashboard({ token, onLogout }: Props) {
       {showLogoutConfirm && (
         <div className={`modal-overlay ${logoutClosing ? '' : 'modal-fade-in'}`} onClick={() => { setLogoutClosing(true); setTimeout(()=>{ setShowLogoutConfirm(false); setLogoutClosing(false); }, 220); }}>
           <div className={`modal ${logoutClosing ? 'modal-exit' : 'modal-enter'}`} onClick={e => e.stopPropagation()}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <h3 style={{margin:0}}>Confirm Logout</h3>
+            <div className="modal-header">
+              <h3>Confirm Logout</h3>
             </div>
-            <div style={{marginTop:12}}>Are you sure you want to log out?</div>
-            <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:16}}>
+            <div className="modal-body">Are you sure you want to log out?</div>
+            <div className="modal-actions">
               <button className="btn btn-ghost" onClick={() => { setLogoutClosing(true); setTimeout(()=>{ setShowLogoutConfirm(false); setLogoutClosing(false); }, 180); }}>Cancel</button>
               <button autoFocus className="btn-danger-filled btn btn-sm" onClick={() => { setAuth(null); setShowLogoutConfirm(false); onLogout(); }}>Logout</button>
             </div>
@@ -146,7 +146,7 @@ export default function Dashboard({ token, onLogout }: Props) {
       )}
 
       <div className="notes-main">
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
+        <div className="notes-top-bar">
           <div className="notes-count-above">
             <div className="notes-count">{notes.length} notes</div>
           </div>
@@ -162,16 +162,16 @@ export default function Dashboard({ token, onLogout }: Props) {
           </div>
         </div>
 
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
-          <div className="notes-toolbar" style={{flex:1}}>
-            <input className="notes-search" placeholder="Search notes by title or content..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-            <select className="filter-select" value={filterCategory ?? ''} onChange={e => setFilterCategory(e.target.value || null)}>
+        <div className="notes-toolbar-wrapper">
+          <div className="notes-toolbar notes-toolbar-full">
+            <input className="notes-search" placeholder="Search notes by title or content..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} aria-label="Search notes" />
+            <select className="filter-select" value={filterCategory ?? ''} onChange={e => setFilterCategory(e.target.value || null)} aria-label="Filter by category">
           <option value="">All categories</option>
           {[...new Set(notes.map(n => n.category).filter(Boolean) as string[])].map(c => (
             <option key={String(c)} value={String(c)}>{String(c)}</option>
           ))}
         </select>
-        <select className="filter-select" value={filterFolder ?? ''} onChange={e => setFilterFolder(e.target.value || null)}>
+        <select className="filter-select" value={filterFolder ?? ''} onChange={e => setFilterFolder(e.target.value || null)} aria-label="Filter by folder">
           <option value="">All folders</option>
           {[...new Set(notes.map(n => n.folder).filter(Boolean) as string[])].map(f => (
             <option key={String(f)} value={String(f)}>{String(f)}</option>
@@ -182,12 +182,12 @@ export default function Dashboard({ token, onLogout }: Props) {
         {/* removed toolbar trash button - moved under the form */}
 
   <form onSubmit={handleAdd} className="notes-form">
-        <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
-        <input placeholder="Category (optional)" value={category} onChange={e => setCategory(e.target.value)} />
-        <input placeholder="Folder (optional)" value={folder} onChange={e => setFolder(e.target.value)} />
-        <textarea placeholder="Content" value={content} onChange={e => setContent(e.target.value)} rows={3} />
+        <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} aria-label="Note title" />
+        <input placeholder="Category (optional)" value={category} onChange={e => setCategory(e.target.value)} aria-label="Note category" />
+        <input placeholder="Folder (optional)" value={folder} onChange={e => setFolder(e.target.value)} aria-label="Note folder" />
+        <textarea placeholder="Content" value={content} onChange={e => setContent(e.target.value)} rows={3} aria-label="Note content" />
         <button type="submit" className="btn btn-primary btn-sm">Add</button>
-        <div style={{marginTop:8}}>
+        <div className="view-toggle-wrapper">
           <button type="button" className="btn btn-ghost" onClick={() => { setView(v => v === 'active' ? 'trash' : 'active'); setNotes([]); }}>
             {view === 'active' ? 'View Trash' : 'View Active'}
           </button>
@@ -227,18 +227,18 @@ function NoteItem({ note, view, onUpdate, onDelete, onRestore }: { note: Note; v
           <div className="note-title">{note.title}</div>
           {note.content && <div className="note-content">{note.content}</div>}
           {(note.category || note.folder) && (
-            <div style={{ marginTop: 8, color: 'var(--muted)', fontSize: '0.9rem' }}>
-              {note.category && <span style={{ marginRight: 8 }}>Category: {note.category}</span>}
+            <div className="note-metadata">
+              {note.category && <span>Category: {note.category}</span>}
               {note.folder && <span>Folder: {note.folder}</span>}
             </div>
           )}
         </div>
       ) : (
         <div className="edit-group">
-          <input value={title} onChange={e => setTitle(e.target.value)} />
-          <input placeholder="Category" value={category} onChange={e => setCategory(e.target.value)} />
-          <input placeholder="Folder" value={folder} onChange={e => setFolder(e.target.value)} />
-          <textarea rows={2} value={content} onChange={e => setContent(e.target.value)} />
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" aria-label="Edit note title" />
+          <input placeholder="Category" value={category} onChange={e => setCategory(e.target.value)} aria-label="Edit note category" />
+          <input placeholder="Folder" value={folder} onChange={e => setFolder(e.target.value)} aria-label="Edit note folder" />
+          <textarea rows={2} value={content} onChange={e => setContent(e.target.value)} placeholder="Content" aria-label="Edit note content" />
         </div>
       )}
       <div className="note-actions">

@@ -6,8 +6,19 @@
   --accent-2: #06b6d4;
 }
 
+/* Smooth scrolling and prevent horizontal overflow */
+html{
+  scroll-behavior:smooth;
+  overflow-x:hidden;
+}
+
+body{
+  overflow-x:hidden;
+  width:100%;
+}
+
 /* shared button utilities */
-.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1px solid transparent;font-weight:600;cursor:pointer}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1px solid transparent;font-weight:600;cursor:pointer;white-space:nowrap}
 .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;border:none;box-shadow:0 10px 30px rgba(124,58,237,0.12)}
 .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
 .btn-danger{background:transparent;border:1px solid rgba(239,68,68,0.12);color:var(--muted)}
@@ -15,7 +26,13 @@
 /* small button modifier */
 .btn-sm{padding:6px 8px;font-size:0.9rem;border-radius:8px}
 
-.notes-container{width:100%;max-width:980px;margin:28px auto;padding:28px;box-sizing:border-box}
+/* Better touch targets for mobile */
+@media (max-width:520px){
+  .btn{min-height:44px;min-width:44px;justify-content:center;padding:10px 14px}
+  .btn-sm{min-height:38px;padding:8px 12px}
+}
+
+.notes-container{width:100%;max-width:980px;margin:28px auto;padding:28px;box-sizing:border-box;overflow-x:hidden}
 .notes-container, .notes-container *{box-sizing:border-box}
 .notes-container{animation:fadeIn .32s ease both}
 .notes-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:18px;border-radius:14px;background:linear-gradient(90deg, rgba(124,58,237,0.12), rgba(6,182,212,0.06));box-shadow:0 8px 30px rgba(6,10,25,0.45);border:1px solid rgba(255,255,255,0.04)}
@@ -28,28 +45,38 @@
 .notes-count{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);font-weight:600}
 .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:10px;color:inherit;cursor:pointer}
 
-.notes-toolbar{display:flex;justify-content:space-between;align-items:center;margin:16px 0;gap:8px}
-.notes-search{flex:1;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:inherit;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,0.02)}
+.notes-toolbar{display:flex;justify-content:space-between;align-items:center;margin:16px 0;gap:8px;flex-wrap:wrap}
+.notes-search{flex:1;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:inherit;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);font-size:1rem}
 
 /* filter select styled like pills */
-.filter-select{appearance:none;-webkit-appearance:none;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:inherit;margin-left:8px;cursor:pointer;box-shadow:0 6px 18px rgba(2,6,23,0.35);transition:transform .12s,box-shadow .12s}
+.filter-select{-webkit-appearance:none;appearance:none;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:inherit;margin-left:8px;cursor:pointer;box-shadow:0 6px 18px rgba(2,6,23,0.35);transition:transform .12s,box-shadow .12s}
 .filter-select:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(2,6,23,0.45)}
 .filter-select:focus{outline:none;border-color:rgba(124,58,237,0.18)}
 .filter-select::-ms-expand{display:none}
 .filter-select::after{content:''}
 
 .notes-form{display:grid;gap:10px;margin-bottom:18px}
-.notes-form input,.notes-form textarea{width:100%;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:inherit}
+.notes-form input,.notes-form textarea{width:100%;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:inherit;box-sizing:border-box}
+.notes-form textarea{resize:vertical;max-height:300px;overflow-y:auto}
 .notes-form button{padding:10px 12px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(124,58,237,0.12)}
 .notes-form .btn{justify-content:center;text-align:center}
 
 .btn[disabled], button[disabled]{opacity:0.6;cursor:not-allowed}
 
 .notes-list{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-.note-card{background:var(--card-bg);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 28px rgba(2,6,23,0.45);display:flex;flex-direction:column;transition:transform .14s ease,box-shadow .14s ease;word-break:break-word}
+.note-card{background:var(--card-bg);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 28px rgba(2,6,23,0.45);display:flex;flex-direction:column;transition:transform .14s ease,box-shadow .14s ease;word-break:break-word;min-height:120px;max-width:100%;overflow:hidden}
 .note-card{opacity:0;transform:translateY(8px);animation:cardIn .42s cubic-bezier(.2,.9,.3,1) both}
 .note-card, .note-content {overflow-wrap:anywhere}
 .note-card:hover{transform:translateY(-6px) scale(1.01);box-shadow:0 18px 46px rgba(6,16,40,0.5)}
+
+/* Disable hover effects on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .note-card:hover{transform:none;box-shadow:0 8px 28px rgba(2,6,23,0.45)}
+  .filter-select:hover{transform:none;box-shadow:0 6px 18px rgba(2,6,23,0.35)}
+  .btn-ghost:hover{transform:none}
+  .notes-form button:hover{transform:none;box-shadow:0 10px 30px rgba(124,58,237,0.12)}
+  .btn-danger-filled:hover{transform:none;box-shadow:0 12px 36px rgba(244,63,94,0.18)}
+}
 .note-title{font-weight:800;margin-bottom:8px;font-size:1.05rem}
 .note-content{color:var(--muted);flex:1;white-space:pre-wrap}
 .note-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
@@ -57,6 +84,8 @@
 .note-actions button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;border:none}
 
 .edit-group{display:grid;gap:8px}
+.edit-group input,.edit-group textarea{width:100%;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:inherit;box-sizing:border-box}
+.edit-group textarea{resize:vertical;max-height:200px;overflow-y:auto;min-height:60px}
 
 .account-panel{margin:8px 0;padding:16px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08));border:1px solid rgba(255,255,255,0.08);box-shadow:0 20px 50px rgba(2,6,23,0.6)}
 .account-form{display:grid;gap:10px;margin-top:12px}
@@ -68,16 +97,19 @@
 .account-form .btn-sm { padding:6px 10px; font-size:0.9rem; border-radius:8px }
 
 @media (max-width:520px){
-  .notes-container{padding:16px;margin:12px}
+  .notes-container{padding:12px;margin:8px}
   .notes-form button{width:100%}
-  .notes-header{flex-direction:column;align-items:flex-start;gap:10px}
+  .notes-header{flex-direction:column;align-items:flex-start;gap:10px;padding:14px}
+  .notes-title{font-size:1.3rem}
+  .notes-subtitle{font-size:0.85rem}
 }
 
 /* modal overlay for account popup */
-.modal-overlay{position:fixed;inset:0;background:rgba(2,6,23,0.72);display:flex;align-items:center;justify-content:center;z-index:60;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:backdrop-filter .24s ease, background .24s ease, opacity .18s ease;opacity:1}
+.modal-overlay{position:fixed;inset:0;background:rgba(2,6,23,0.72);display:flex;align-items:center;justify-content:center;z-index:60;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:backdrop-filter .24s ease, background .24s ease, opacity .18s ease;opacity:1;padding:16px}
 .modal-overlay.modal-fade-in{animation:overlayFade .22s ease both}
-.modal{background:linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08));padding:20px;border-radius:12px;min-width:320px;max-width:720px;box-shadow:0 50px 140px rgba(2,6,23,0.9);border:1px solid rgba(255,255,255,0.08)}
-.modal-close{position:absolute;top:12px;right:12px;background:transparent;border:none;color:inherit;cursor:pointer}
+.modal{background:linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08));padding:20px;border-radius:12px;min-width:320px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 50px 140px rgba(2,6,23,0.9);border:1px solid rgba(255,255,255,0.08);position:relative}
+.modal-close{position:absolute;top:12px;right:12px;background:transparent;border:none;color:inherit;cursor:pointer;font-size:1.5rem;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:background .2s}
+.modal-close:hover{background:rgba(255,255,255,0.1)}
 
 .modal-enter{animation:modalIn .22s cubic-bezier(.2,.9,.3,1) both}
 .modal-exit{animation:modalOut .18s cubic-bezier(.2,.9,.3,1) both}
@@ -85,21 +117,51 @@
 /* make sure select and toolbar items wrap on small screens */
 @media (max-width:720px){
   .notes-toolbar{flex-direction:column;align-items:stretch;gap:10px}
-  .notes-search{width:100%}
-  .filter-select{margin-left:0;width:100%}
+  .notes-search{width:100%;font-size:1rem}
+  .filter-select{margin-left:0;width:100%;padding:10px 12px}
   .notes-header-right{width:100%;justify-content:flex-start}
+  .notes-list{grid-template-columns:1fr;gap:12px}
+  .modal{min-width:auto;max-width:calc(100vw - 32px);margin:16px}
 }
 
 /* further mobile stacking for very small screens: make header controls full width and allow note action buttons to wrap */
 @media (max-width:520px){
-  .notes-header-right{flex-wrap:wrap}
-  .notes-header-right > *{flex:1 1 100%;min-width:0;margin-bottom:8px}
-  .note-actions{flex-wrap:wrap;justify-content:flex-end}
-  .note-actions button{min-width:0}
+  .notes-header-right{flex-wrap:wrap;gap:8px}
+  .notes-header-right > *{flex:1 1 auto;min-width:0;margin-bottom:0}
+  .notes-header-right button{width:100%;justify-content:center}
+  .note-actions{flex-wrap:wrap;justify-content:flex-end;gap:6px}
+  .note-actions button{min-width:0;font-size:0.85rem;padding:7px 9px;flex:1 1 auto}
+  .btn{font-size:0.9rem}
+  .note-card{padding:12px}
+  .note-title{font-size:1rem}
+  .note-content{font-size:0.9rem}
+  .notes-count-above{flex-direction:column;align-items:flex-start;gap:8px;width:100%}
+  .notes-count-above .notes-count{margin-right:0;font-size:0.9rem}
 }
 
 @media (max-width:720px){
   .notes-container{margin-top:8px;padding:16px}
+  .notes-list-wrapper{max-height:none}
+}
+
+/* Additional mobile fixes */
+@media (max-width:420px){
+  .notes-container{padding:8px;margin:4px}
+  .notes-header{padding:12px}
+  .notes-form input,.notes-form textarea{padding:10px 12px;font-size:1rem}
+  .filter-select{padding:9px 11px;font-size:0.95rem}
+  .notes-search{padding:10px 12px;font-size:1rem}
+  .btn-sm{padding:5px 8px;font-size:0.85rem}
+  .modal{padding:16px;min-width:auto;border-radius:8px}
+  .notes-list{grid-template-columns:1fr;gap:10px}
+  .account-form button{width:100%;justify-self:stretch}
+}
+
+/* Landscape orientation on mobile */
+@media (max-width:720px) and (orientation: landscape){
+  .notes-container{padding:12px}
+  .notes-header{padding:12px}
+  .modal{max-height:80vh}
 }
 
 /* Layout: keep header + form fixed and allow notes list to scroll to avoid layout shifts on resize */
@@ -115,7 +177,8 @@
 
 /* Small-screen adjustments keep wrapper scrollable */
 @media (max-width:720px){
-  .notes-list-wrapper{max-height:60vh}
+  .notes-list-wrapper{max-height:none;padding-right:0}
+  .notes-main{gap:10px}
 }
 
 
@@ -146,3 +209,19 @@
   .modal .btn-full{width:100%}
   .modal .btn-full + .btn{margin-top:8px}
 }
+
+/* Modal content styles */
+.modal-header{display:flex;justify-content:space-between;align-items:center}
+.modal-header h3{margin:0}
+.modal-body{margin-top:12px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+/* Dashboard layout helpers */
+.notes-top-bar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.notes-toolbar-wrapper{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.notes-toolbar-full{flex:1}
+.view-toggle-wrapper{margin-top:8px}
+
+/* Note metadata styles */
+.note-metadata{margin-top:8px;color:var(--muted);font-size:0.9rem}
+.note-metadata span{margin-right:8px}
