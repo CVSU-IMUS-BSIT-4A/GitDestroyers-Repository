@@ -2,7 +2,7 @@
 
 A full-stack blog platform built with React (Vite) and NestJS, featuring user authentication, post management, comments, likes, notifications, and edit history tracking.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Tech Stack](#tech-stack)
@@ -31,7 +31,7 @@ The application consists of two main components:
 - **Frontend**: React application built with Vite, TypeScript, and Tailwind CSS
 - **Backend**: RESTful API built with NestJS, TypeORM, and SQLite
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Frontend
 - **React 18.2.0** - UI library
@@ -54,7 +54,7 @@ The application consists of two main components:
 - **Swagger** - API documentation
 - **Passport** - Authentication middleware
 
-## ✨ Features
+## Features
 
 ### Authentication & Authorization
 - User registration and login
@@ -104,7 +104,7 @@ The application consists of two main components:
 - Error handling
 - Form validation
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Activity5/
@@ -143,7 +143,7 @@ Activity5/
         └── package.json
 ```
 
-## 📦 Prerequisites
+##  Prerequisites
 
 Before you begin, ensure you have the following installed:
 
@@ -151,7 +151,7 @@ Before you begin, ensure you have the following installed:
 - **npm** (v9 or higher) or **yarn**
 - **Git** (for cloning the repository)
 
-## 🚀 Installation
+## Installation
 
 1. **Clone the repository** (if not already cloned):
    ```bash
@@ -171,7 +171,7 @@ Before you begin, ensure you have the following installed:
    npm install
    ```
 
-## 🏃 Running the Application
+## Running the Application
 
 ### Start the Backend Server
 
@@ -340,7 +340,7 @@ The application uses SQLite with TypeORM. Key entities include:
 - `newContent` - New content
 - `editedAt` - Edit timestamp
 
-## 🔑 Key Features
+##  Key Features
 
 ### 1. Authentication System
 - Secure user registration and login
@@ -436,7 +436,7 @@ The backend uses:
 - **DTOs**: Data Transfer Objects for validation
 - **Guards**: Authentication guards for protected routes
 
-## 📝 Notes
+## Notes
 
 - The SQLite database (`blog.db`) is created automatically on first run
 - File uploads are stored in `backend/blog-api/uploads/`
@@ -444,7 +444,7 @@ The backend uses:
 - The application uses CORS for cross-origin requests
 - All API endpoints include validation via class-validator
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Backend Issues
 - Ensure port 3005 is not in use
@@ -461,11 +461,4 @@ The backend uses:
 - Delete `blog.db` to reset the database
 - Ensure TypeORM synchronize is enabled for development
 
-## 📄 License
-
-This project is part of Activity 5 and is for educational purposes.
-
----
-
-**Built with ❤️ using React, NestJS, and TypeScript**
 
