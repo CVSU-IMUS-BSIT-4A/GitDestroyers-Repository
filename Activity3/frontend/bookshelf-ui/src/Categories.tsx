@@ -1,62 +1,102 @@
-import { useEffect, useState } from 'react';
-import type { Category } from './api';
-import { createCategory, deleteCategory, listCategories, updateCategory } from './api';
+import React, { useEffect, useState } from 'react';
+
+type Category = {
+  id?: string;
+  name: string;
+};
 
 export default function Categories() {
-  const [items, setItems] = useState<Category[]>([]);
-  const [name, setName] = useState('');
+  const [categories, setCategories] = useState<Category[]>(() => {
+    try {
+      const raw = localStorage.getItem('categories');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  
+  const [value, setValue] = useState('');
 
-  useEffect(() => { (async () => setItems(await listCategories()))(); }, []);
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key === 'categories') {
+        setCategories(prev => {
+          try {
+            const raw = localStorage.getItem('categories');
+            return raw ? JSON.parse(raw) : prev;
+          } catch {
+            return prev;
+          }
+        });
+      }
+    }
+    
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
-  async function add() {
-    if (!name.trim()) return;
-    const created = await createCategory(name.trim());
-    setItems(prev => [...prev, created]);
-    setName('');
+  function saveList(next: Category[]) {
+    setCategories(next);
+    localStorage.setItem('categories', JSON.stringify(next));
+    window.dispatchEvent(new Event('categories:changed'));
   }
-  async function save(item: Category, newName: string) {
-    const updated = await updateCategory(item.id, newName.trim());
-    setItems(prev => prev.map(i => i.id === item.id ? updated : i));
+
+  function addCategory() {
+    const name = value.trim();
+    if (!name) return;
+    
+    if (categories.find(c => c.name.toLowerCase() === name.toLowerCase())) {
+      setValue('');
+      return;
+    }
+
+    const newCategory: Category = {
+      id: crypto.randomUUID?.() ?? String(Date.now()),
+      name
+    };
+
+    saveList([newCategory, ...categories]);
+    setValue('');
   }
-  async function remove(item: Category) {
-    await deleteCategory(item.id);
-    setItems(prev => prev.filter(i => i.id !== item.id));
+
+  function removeCategory(index: number) {
+    const next = categories.slice();
+    next.splice(index, 1);
+    saveList(next);
   }
 
   return (
     <div>
       <h2>Categories</h2>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <input placeholder="Name" value={name} onChange={e => setName(e.target.value)} />
-        <button onClick={add}>Add</button>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <input 
+          value={value} 
+          onChange={e => setValue(e.target.value)}
+          placeholder="New category"
+          onKeyPress={e => e.key === 'Enter' && addCategory()}
+        />
+        <button onClick={addCategory}>Add</button>
       </div>
-      <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 8 }}>
-        {items.map(c => <Row key={c.id} category={c} onSave={save} onDelete={remove} />)}
+      <ul style={{ listStyle: 'none', padding: 0 }}>
+        {categories.map((category, i) => (
+          <li 
+            key={category.id ?? i} 
+            style={{ 
+              display: 'flex', 
+              gap: 8, 
+              alignItems: 'center',
+              marginBottom: 8,
+              padding: 8,
+              border: '1px solid #ddd',
+              borderRadius: 4
+            }}
+          >
+            <span>{category.name}</span>
+            <button onClick={() => removeCategory(i)}>Delete</button>
+          </li>
+        ))}
       </ul>
     </div>
-  );
-}
-
-function Row({ category, onSave, onDelete }: { category: Category; onSave: (c: Category, n: string) => void | Promise<void>; onDelete: (c: Category) => void | Promise<void> }) {
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(category.name);
-  return (
-    <li style={{ border: '1px solid #ddd', padding: 8, borderRadius: 6 }}>
-      {!editing ? (<span>{category.name}</span>) : (<input value={name} onChange={e => setName(e.target.value)} />)}
-      <span style={{ marginLeft: 8 }}>
-        {!editing ? (
-          <>
-            <button onClick={() => setEditing(true)}>Edit</button>
-            <button onClick={() => onDelete(category)}>Delete</button>
-          </>
-        ) : (
-          <>
-            <button onClick={() => { onSave(category, name); setEditing(false); }}>Save</button>
-            <button onClick={() => { setEditing(false); setName(category.name); }}>Cancel</button>
-          </>
-        )}
-      </span>
-    </li>
   );
 }
 

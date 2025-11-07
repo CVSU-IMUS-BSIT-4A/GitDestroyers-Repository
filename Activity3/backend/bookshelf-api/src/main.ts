@@ -1,21 +1,30 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // Enable CORS
   app.enableCors();
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
+  // Add validation
+  app.useGlobalPipes(new ValidationPipe());
+
+  // Configure Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('Bookshelf API')
-    .setDescription('CRUD for authors, categories, and books')
-    .setVersion('1.0.0')
+    .setDescription('API documentation for the Bookshelf application')
+    .setVersion('1.0')
+    .addTag('books')
+    .addTag('authors')
+    .addTag('categories')
     .build();
-  const doc = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, doc);
 
-  await app.listen(process.env.PORT ?? 3003);
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document);  // Changed from 'docs' to 'api'
+
+  await app.listen(3003);
 }
 bootstrap();

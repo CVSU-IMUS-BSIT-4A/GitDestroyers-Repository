@@ -1,64 +1,63 @@
-import { useEffect, useState } from 'react';
-import type { Author } from './api';
-import { createAuthor, deleteAuthor, listAuthors, updateAuthor } from './api';
+import React, { useEffect, useState } from 'react';
 
 export default function Authors() {
-  const [items, setItems] = useState<Author[]>([]);
-  const [name, setName] = useState('');
+  const [authors, setAuthors] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem('authors');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [value, setValue] = useState('');
 
-  useEffect(() => { (async () => setItems(await listAuthors()))(); }, []);
+  useEffect(() => {
+    // keep local state in sync if other tabs change storage
+    function onStorage(e: StorageEvent) {
+      if (e.key === 'authors') setAuthors(prev => {
+        try { return JSON.parse(localStorage.getItem('authors') || '[]'); } catch { return prev; }
+      });
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
-  async function add() {
-    if (!name.trim()) return;
-    const created = await createAuthor(name.trim());
-    setItems(prev => [...prev, created]);
-    setName('');
+  function saveList(next: string[]) {
+    setAuthors(next);
+    localStorage.setItem('authors', JSON.stringify(next));
+    window.dispatchEvent(new Event('authors:changed')); // notify same-tab listeners
   }
 
-  async function save(item: Author, newName: string) {
-    const updated = await updateAuthor(item.id, newName.trim());
-    setItems(prev => prev.map(i => i.id === item.id ? updated : i));
+  function addAuthor() {
+    const name = value.trim();
+    if (!name) return;
+    if (authors.find(a => a.toLowerCase() === name.toLowerCase())) { setValue(''); return; }
+    saveList([name, ...authors]);
+    setValue('');
   }
 
-  async function remove(item: Author) {
-    await deleteAuthor(item.id);
-    setItems(prev => prev.filter(i => i.id !== item.id));
+  function removeAuthor(index: number) {
+    const next = authors.slice();
+    next.splice(index, 1);
+    saveList(next);
   }
 
   return (
     <div>
       <h2>Authors</h2>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <input placeholder="Name" value={name} onChange={e => setName(e.target.value)} />
-        <button onClick={add}>Add</button>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input value={value} onChange={e => setValue(e.target.value)} placeholder="New author" />
+        <button onClick={addAuthor}>Add</button>
       </div>
-      <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 8 }}>
-        {items.map(a => <Row key={a.id} author={a} onSave={save} onDelete={remove} />)}
+      <ul>
+        {authors.map((a, i) => (
+          <li key={a + i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span>{a}</span>
+            <button onClick={() => removeAuthor(i)}>Delete</button>
+          </li>
+        ))}
       </ul>
     </div>
-  );
-}
-
-function Row({ author, onSave, onDelete }: { author: Author; onSave: (a: Author, n: string) => void | Promise<void>; onDelete: (a: Author) => void | Promise<void> }) {
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(author.name);
-  return (
-    <li style={{ border: '1px solid #ddd', padding: 8, borderRadius: 6 }}>
-      {!editing ? (<span>{author.name}</span>) : (<input value={name} onChange={e => setName(e.target.value)} />)}
-      <span style={{ marginLeft: 8 }}>
-        {!editing ? (
-          <>
-            <button onClick={() => setEditing(true)}>Edit</button>
-            <button onClick={() => onDelete(author)}>Delete</button>
-          </>
-        ) : (
-          <>
-            <button onClick={() => { onSave(author, name); setEditing(false); }}>Save</button>
-            <button onClick={() => { setEditing(false); setName(author.name); }}>Cancel</button>
-          </>
-        )}
-      </span>
-    </li>
   );
 }
 
