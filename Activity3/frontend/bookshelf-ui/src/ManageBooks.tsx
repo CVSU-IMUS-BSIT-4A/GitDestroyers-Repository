@@ -280,200 +280,311 @@ export default function ManageBooks() {
   for (let y = currentYear; y >= 1980; y--) years.push(y);
 
   return (
-    <div>
-      <h2>Manage Books</h2>
+      <div>
+        
+      <form
+  onSubmit={handleAddOrSave}
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+    width: "100%",
+    maxWidth: 480, // smaller form width
+    margin: "0 auto",
+    background: "#ffffff",
+    padding: 24,
+    borderRadius: 10,
+    boxShadow: "0 3px 10px rgba(0,0,0,0.08)",
+    border: "1px solid #e3e3e3",
+  }}
+>
+  {/* TITLE */}
+  <div style={{ display: "flex", flexDirection: "column" }}>
+    <label style={{ marginBottom: 4 }}>Title *</label>
+    <input
+      name="title"
+      value={form.title}
+      onChange={handleChange}
+      placeholder="Enter book title"
+      style={{ padding: 10, borderRadius: 6, border: "1px solid #ccc" }}
+    />
+    {errors.title && (
+      <span style={{ color: "red", fontSize: 12 }}>{errors.title}</span>
+    )}
+  </div>
 
-      <form onSubmit={handleAddOrSave} style={{ display: 'grid', gap: 8, maxWidth: 700 }}>
-        <div>
-          <input name="title" value={form.title} onChange={handleChange} placeholder="Title *" />
-          {errors.title && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.title}</div>}
-        </div>
+  {/* AUTHOR */}
+  <div style={{ display: "flex", flexDirection: "column" }}>
+    <label style={{ marginBottom: 4 }}>Author *</label>
+    <select
+      name="author"
+      value={form.author}
+      onChange={(e) => {
+        const val = e.target.value;
+        setForm((prev) => ({ ...prev, author: val }));
+        setErrors((prev) => {
+          const c = { ...prev };
+          delete c.author;
+          return c;
+        });
+      }}
+      style={{ padding: 10, borderRadius: 6, border: "1px solid #ccc" }}
+    >
+      <option value="">— Select —</option>
+      {authors.map((author) => (
+        <option key={author.id}>{author.name}</option>
+      ))}
+    </select>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: 6 }}>Author</label>
-          <select
-            name="author"
-            value={form.author}
-            onChange={(e) => {
-              const val = e.target.value;
-              setForm(prev => ({ ...prev, author: val }));
-              setErrors(prev => { const c = { ...prev }; delete c.author; return c; });
-            }}
-          >
-            <option value="">— select —</option>
-            {authors.map(author => (
-              <option key={author.id}>{author.name}</option>
-            ))}
-          </select>
-          {showNewAuthorInput && (
-            <div style={{ marginTop: 6 }}>
-              <input name="author" value={form.author} onChange={handleChange} placeholder="New author name" />
-            </div>
-          )}
-          {errors.author && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.author}</div>}
-        </div>
+    {showNewAuthorInput && (
+      <input
+        name="author"
+        value={form.author}
+        onChange={handleChange}
+        placeholder="New author name"
+        style={{
+          marginTop: 8,
+          padding: 10,
+          borderRadius: 6,
+          border: "1px solid #ccc"
+        }}
+      />
+    )}
 
-        <div>
-          <label style={{ display: 'block', marginBottom: 6 }}>Category</label>
-          <select
-            name="category"
-            value={showNewCategoryInput ? '__new__' : form.category}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === '__new__') {
-                setShowNewCategoryInput(true);
-                setForm(prev => ({ ...prev, category: '' }));
-                setErrors(prev => { const c = { ...prev }; delete c.category; return c; });
-              } else {
-                setShowNewCategoryInput(false);
-                setForm(prev => ({ ...prev, category: val }));
-                setErrors(prev => { const c = { ...prev }; delete c.category; return c; });
-              }
-            }}
-          >
-            <option value="">— select —</option>
-            {categories.map(c => (
-              <option key={c.id ?? c.name} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-            <option value="__new__">+ Add new category…</option>
-          </select>
-          {showNewCategoryInput && (
-            <div style={{ marginTop: 6 }}>
-              <input name="category" value={form.category} onChange={handleChange} placeholder="New category name" />
-            </div>
-          )}
-          {errors.category && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.category}</div>}
-        </div>
+    {errors.author && (
+      <span style={{ color: "red", fontSize: 12 }}>{errors.author}</span>
+    )}
+  </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: 6 }}>Published year</label>
-          <select name="publishedYear" value={form.publishedYear} onChange={handleChange}>
-            <option value="">— select —</option>
-            {years.map(y => (
-              <option key={y} value={String(y)}>{y}</option>
-            ))}
-          </select>
-          {errors.publishedYear && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.publishedYear}</div>}
-        </div>
+  {/* CATEGORY */}
+  <div style={{ display: "flex", flexDirection: "column" }}>
+    <label style={{ marginBottom: 4 }}>Category *</label>
+    <select
+      name="category"
+      value={showNewCategoryInput ? "__new__" : form.category}
+      onChange={(e) => {
+        const val = e.target.value;
+        if (val === "__new__") {
+          setShowNewCategoryInput(true);
+          setForm((prev) => ({ ...prev, category: "" }));
+        } else {
+          setShowNewCategoryInput(false);
+          setForm((prev) => ({ ...prev, category: val }));
+        }
+      }}
+      style={{ padding: 10, borderRadius: 6, border: "1px solid #ccc" }}
+    >
+      <option value="">— Select —</option>
+      {categories.map((c) => (
+        <option key={c.id ?? c.name} value={c.name}>
+          {c.name}
+        </option>
+      ))}
+      <option value="__new__">+ Add new category…</option>
+    </select>
 
-        <div>
-          <input
-            name="isbn"
-            value={form.isbn}
-            onChange={handleIsbnChange}
-            placeholder="ISBN (10-13 digits; dashes/spaces allowed) *"
-          />
-          {errors.isbn && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.isbn}</div>}
-        </div>
+    {showNewCategoryInput && (
+      <input
+        name="category"
+        value={form.category}
+        onChange={handleChange}
+        placeholder="New category name"
+        style={{
+          marginTop: 8,
+          padding: 10,
+          borderRadius: 6,
+          border: "1px solid #ccc"
+        }}
+      />
+    )}
 
-        <div>
-          <input
-            name="pageCount"
-            value={form.pageCount}
-            onChange={handleChange}
-            placeholder="Page count *"
-            type="number"
-            min={1}
-          />
-          {errors.pageCount && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.pageCount}</div>}
-        </div>
+    {errors.category && (
+      <span style={{ color: "red", fontSize: 12 }}>{errors.category}</span>
+    )}
+  </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: 6 }}>Cover image *</label>
-          <input type="file" accept="image/*" onChange={handleCoverFileChange} name="coverUrl" />
-          {form.coverUrl ? (
-            <div style={{ marginTop: 8 }}>
-              <div style={{ width: 120, height: 160, border: '1px solid #ddd', overflow: 'hidden' }}>
-                <img src={form.coverUrl} alt="cover preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+  {/* PUBLISHED YEAR */}
+  <div style={{ display: "flex", flexDirection: "column" }}>
+    <label style={{ marginBottom: 4 }}>Published Year *</label>
+    <select
+      name="publishedYear"
+      value={form.publishedYear}
+      onChange={handleChange}
+      style={{ padding: 10, borderRadius: 6, border: "1px solid #ccc" }}
+    >
+      <option value="">— Select —</option>
+      {years.map((y) => (
+        <option key={y} value={String(y)}>
+          {y}
+        </option>
+      ))}
+    </select>
+
+    {errors.publishedYear && (
+      <span style={{ color: "red", fontSize: 12 }}>
+        {errors.publishedYear}
+      </span>
+    )}
+  </div>
+
+  {/* ISBN */}
+  <div style={{ display: "flex", flexDirection: "column" }}>
+    <label style={{ marginBottom: 4 }}>ISBN *</label>
+    <input
+      name="isbn"
+      value={form.isbn}
+      onChange={handleIsbnChange}
+      placeholder="ISBN (10–13 digits)"
+      style={{ padding: 10, borderRadius: 6, border: "1px solid #ccc" }}
+    />
+    {errors.isbn && (
+      <span style={{ color: "red", fontSize: 12 }}>{errors.isbn}</span>
+    )}
+  </div>
+
+  {/* PAGE COUNT */}
+  <div style={{ display: "flex", flexDirection: "column" }}>
+    <label style={{ marginBottom: 4 }}>Page Count *</label>
+    <input
+      name="pageCount"
+      value={form.pageCount}
+      onChange={handleChange}
+      placeholder="Number of pages"
+      type="number"
+      min="1"
+      style={{ padding: 10, borderRadius: 6, border: "1px solid #ccc" }}
+    />
+    {errors.pageCount && (
+      <span style={{ color: "red", fontSize: 12 }}>{errors.pageCount}</span>
+    )}
+  </div>
+
+  {/* COVER IMAGE */}
+  <div style={{ display: "flex", flexDirection: "column" }}>
+    <label style={{ marginBottom: 4 }}>Cover Image *</label>
+    <input type="file" accept="image/*" onChange={handleCoverFileChange} />
+
+    {form.coverUrl && (
+      <div style={{ marginTop: 10 }}>
+        <img
+          src={form.coverUrl}
+          alt="cover"
+          style={{
+            width: 120,
+            height: 160,
+            objectFit: "cover",
+            borderRadius: 8,
+            border: "1px solid #ccc"
+          }}
+        />
+        <button
+          type="button"
+          onClick={removeCoverImage}
+          style={{
+            marginTop: 8,
+            padding: "6px 12px",
+            background: "#cc0000",
+            color: "white",
+            border: "none",
+            borderRadius: 6,
+            cursor: "pointer"
+          }}
+        >
+          Remove
+        </button>
+      </div>
+    )}
+
+    {errors.coverUrl && (
+      <span style={{ color: "red", fontSize: 12 }}>{errors.coverUrl}</span>
+    )}
+  </div>
+
+  {/* PLOT */}
+ <div style={{
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: 10,
+  marginTop: 4
+}}>
+  <button
+    type="submit"
+    style={{
+      padding: "6px 14px",
+      background: "green",
+      color: "white",
+      border: "none",
+      borderRadius: 5,
+      cursor: "pointer",
+      fontSize: 14
+    }}
+  >
+    {editingId ? "Save" : "Add"}
+  </button>
+
+  <button
+    type="button"
+    onClick={() => {
+      setEditingId(null);
+      setForm({
+        title: "",
+        author: "",
+        category: "",
+        publishedYear: "",
+        isbn: "",
+        pageCount: "",
+        coverUrl: "",
+        plot: ""
+      });
+      setShowNewAuthorInput(false);
+      setShowNewCategoryInput(false);
+      setErrors({});
+    }}
+    style={{
+      padding: "6px 14px",
+      background: "darkred",
+      color: "white",
+      border: "none",
+      borderRadius: 5,
+      cursor: "pointer",
+      fontSize: 14
+    }}
+  >
+    Reset
+  </button>
+</div>
+</form>
+
+ 
+          <h3 style={{ marginTop: 24,  }}>Existing books ({books.length})</h3>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {books.map(b => (
+            <li key={b.id} style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'flex-start' }}>
+              <div style={{ width: 96, height: 140, background: '#f4f4f4', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {b.coverUrl ? <img src={b.coverUrl} alt={b.title} style={{ maxWidth: '100%', maxHeight: '100%' }} /> : <small>No cover</small>}
               </div>
-              <div style={{ marginTop: 8 }}>
-                <button type="button" onClick={removeCoverImage}>Remove image</button>
+              <div style={{ flex: 1 }}>
+                <strong>{b.title}</strong>
+                <div>{b.author && <span>By {b.author} · </span>}{b.category && <span>{b.category} · </span>}</div>
+                <div style={{ marginTop: 6, fontSize: 13, color: '#444' }}>
+                  {b.publishedYear ? <span>Published: {b.publishedYear} · </span> : null}
+                  {b.isbn ? <span>ISBN: {b.isbn} · </span> : null}
+                  {b.pageCount ? <span>{b.pageCount} pages</span> : null}
+                </div>
+                <details style={{ marginTop: 8 }}>
+                  <summary style={{ cursor: 'pointer' }}>Plot</summary>
+                  <p style={{ margin: '8px 0', fontSize: 14 }}>{b.plot}</p>
+                </details>
+                <div style={{ marginTop: 8 }}>
+                  <button onClick={() => handleEdit(b)}>Edit</button>
+                  <button onClick={() => handleDelete(b.id)} style={{ marginLeft: 8 }}>Delete</button>
+                    
+                </div>
               </div>
-            </div>
-          ) : null}
-          {errors.coverUrl && <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.coverUrl}</div>}
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: 6 }}>
-            Plot *
-            <span style={{ marginLeft: 8, fontSize: 12, color: '#666' }}>
-              (Minimum 100 characters)
-            </span>
-          </label>
-          <textarea
-            name="plot"
-            value={form.plot}
-            onChange={handleChange}
-            placeholder="Enter the plot of the book..."
-            style={{ 
-              width: '100%', 
-              minHeight: 50,
-              padding: 8,
-              resize: 'vertical',
-              border: errors.plot ? '1px solid red' : undefined
-            }}
-          />
-          {errors.plot && (
-            <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
-              {errors.plot}
-            </div>
-          )}
-          <div style={{ 
-            fontSize: 12, 
-            color: form.plot.length < 100 ? '#666' : '#008000',
-            marginTop: 4 
-          }}>
-            {form.plot.length} / 100 characters minimum
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit">{editingId ? 'Save' : 'Add Book'}</button>
-          <button
-            type="button"
-            onClick={() => {
-              setEditingId(null);
-              setForm({ title: '', author: '', category: '', publishedYear: '', isbn: '', pageCount: '', coverUrl: '', plot: '' });
-              setShowNewAuthorInput(false);
-              setShowNewCategoryInput(false);
-              setErrors({});
-            }}
-          >
-            Reset
-          </button>
-        </div>
-      </form>
-
-      <h3 style={{ marginTop: 24 }}>Existing books ({books.length})</h3>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {books.map(b => (
-          <li key={b.id} style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'flex-start' }}>
-            <div style={{ width: 96, height: 140, background: '#f4f4f4', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {b.coverUrl ? <img src={b.coverUrl} alt={b.title} style={{ maxWidth: '100%', maxHeight: '100%' }} /> : <small>No cover</small>}
-            </div>
-            <div style={{ flex: 1 }}>
-              <strong>{b.title}</strong>
-              <div>{b.author && <span>By {b.author} · </span>}{b.category && <span>{b.category} · </span>}</div>
-              <div style={{ marginTop: 6, fontSize: 13, color: '#444' }}>
-                {b.publishedYear ? <span>Published: {b.publishedYear} · </span> : null}
-                {b.isbn ? <span>ISBN: {b.isbn} · </span> : null}
-                {b.pageCount ? <span>{b.pageCount} pages</span> : null}
-              </div>
-              <details style={{ marginTop: 8 }}>
-                <summary style={{ cursor: 'pointer' }}>Plot</summary>
-                <p style={{ margin: '8px 0', fontSize: 14 }}>{b.plot}</p>
-              </details>
-              <div style={{ marginTop: 8 }}>
-                <button onClick={() => handleEdit(b)}>Edit</button>
-                <button onClick={() => handleDelete(b.id)} style={{ marginLeft: 8 }}>Delete</button>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+            </li>
+          ))}
+        </ul>
+      </div>
+   
+    );
 }
