@@ -98,6 +98,12 @@ export default function ManageBooks() {
       setErrors(prev => ({ ...prev, coverUrl: 'Selected file is not an image' }));
       return;
     }
+    // Check file size (10MB = 10 * 1024 * 1024 bytes)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      setErrors(prev => ({ ...prev, coverUrl: 'Image size must be 10MB or less' }));
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = String(reader.result || '');
@@ -389,7 +395,7 @@ export default function ManageBooks() {
               {categories.map(category => (
                 <option key={category.id} value={category.id}>{category.name}</option>
               ))}
-              <option value="__new__">+ Add new category</option>
+              <option value="__new__">+ Add new category…</option>
             </select>
           ) : (
             <div className="grid" style={{ gap: 8 }}>

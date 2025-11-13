@@ -9,7 +9,7 @@ type Filter = {
   category: string;
 };
 
-const ITEMS_PER_PAGE_OPTIONS = [5, 10, 20];
+const ITEMS_PER_PAGE_OPTIONS = [3, 5, 10, 20];
 
 export default function Books() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -20,7 +20,7 @@ export default function Books() {
     category: '',
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(3);
   const [previewBook, setPreviewBook] = useState<Book | null>(null);
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export default function Books() {
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
           <input
             type="text"
-            placeholder="Search books..."
+            placeholder="What Books are you looking for?"
             value={filters.search}
             onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
             className="input"
@@ -135,7 +135,7 @@ export default function Books() {
           className="select"
         >
           {ITEMS_PER_PAGE_OPTIONS.map(opt => (
-            <option key={opt} value={opt}>Show {opt}</option>
+            <option key={opt} value={opt}>{opt} per page</option>
           ))}
         </select>
         {(filters.search || filters.author || filters.category) && (
@@ -145,50 +145,14 @@ export default function Books() {
             style={{ display: 'flex', alignItems: 'center', gap: 4 }}
           >
             <X size={14} />
-            Clear
+            Reset Filters
           </button>
         )}
       </div>
 
       <div style={{ marginBottom: 12, color: 'var(--muted)', fontSize: 14 }}>
-        {filteredBooks.length} of {books.length} books
+        Books ({filteredBooks.length} of {books.length})
       </div>
-
-      {filteredBooks.length > itemsPerPage && (
-        <div className="row" style={{ marginBottom: 12, justifyContent: 'center', gap: 8 }}>
-          <button
-            onClick={() => setCurrentPage(1)}
-            disabled={currentPage === 1}
-            className="button"
-          >
-            First
-          </button>
-          <button
-            onClick={() => setCurrentPage(p => p - 1)}
-            disabled={currentPage === 1}
-            className="button"
-          >
-            Previous
-          </button>
-          <span style={{ color: 'var(--muted)', padding: '0 8px' }}>
-            {currentPage} / {totalPages || 1}
-          </span>
-          <button
-            onClick={() => setCurrentPage(p => p + 1)}
-            disabled={currentPage === totalPages}
-            className="button"
-          >
-            Next
-          </button>
-          <button
-            onClick={() => setCurrentPage(totalPages)}
-            disabled={currentPage === totalPages}
-            className="button"
-          >
-            Last
-          </button>
-        </div>
-      )}
 
       <ul className="list">
         {paginatedBooks.map(book => (
@@ -217,13 +181,13 @@ export default function Books() {
                   onClick={() => setPreviewBook(book)}
                   className="button"
                 >
-                  Preview
+                  Preview Book
                 </button>
                 <button
                   onClick={() => handleBorrow(book.id)}
                   className={`button ${book.borrowed ? '' : 'primary'}`}
                 >
-                  {book.borrowed ? 'Return' : 'Borrow'}
+                  {book.borrowed ? 'Return Book' : 'Borrow'}
                 </button>
                 <button
                   onClick={() => handleDelete(book.id)}
@@ -237,35 +201,35 @@ export default function Books() {
         ))}
       </ul>
 
-      {filteredBooks.length > itemsPerPage && (
+      {filteredBooks.length > 0 && (
         <div className="row" style={{ marginTop: 12, justifyContent: 'center', gap: 8 }}>
           <button
             onClick={() => setCurrentPage(1)}
-            disabled={currentPage === 1}
+            disabled={currentPage === 1 || totalPages <= 1}
             className="button"
           >
             First
           </button>
           <button
             onClick={() => setCurrentPage(p => p - 1)}
-            disabled={currentPage === 1}
+            disabled={currentPage === 1 || totalPages <= 1}
             className="button"
           >
             Previous
           </button>
           <span style={{ color: 'var(--muted)', padding: '0 8px' }}>
-            {currentPage} / {totalPages || 1}
+            Page {currentPage} of {totalPages || 1}
           </span>
           <button
             onClick={() => setCurrentPage(p => p + 1)}
-            disabled={currentPage === totalPages}
+            disabled={currentPage === totalPages || totalPages <= 1}
             className="button"
           >
             Next
           </button>
           <button
             onClick={() => setCurrentPage(totalPages)}
-            disabled={currentPage === totalPages}
+            disabled={currentPage === totalPages || totalPages <= 1}
             className="button"
           >
             Last

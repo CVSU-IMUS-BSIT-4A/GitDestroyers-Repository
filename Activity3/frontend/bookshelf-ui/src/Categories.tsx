@@ -64,12 +64,13 @@ export default function Categories() {
 
   return (
     <div>
+      <h2 className="item-title" style={{ marginBottom: 16 }}>Categories</h2>
       <div className="row" style={{ marginBottom: 16 }}>
         <input
           value={value}
           onChange={e => setValue(e.target.value)}
           onKeyPress={e => e.key === 'Enter' && addCategory()}
-          placeholder="New category name"
+          placeholder="New category"
           className="input"
           style={{ flex: 1 }}
         />

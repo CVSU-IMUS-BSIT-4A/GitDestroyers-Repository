@@ -36,7 +36,7 @@ export default function App() {
     <div className="container">
       <div className="header">
         <div>
-          <h1 className="title">Bookshelf</h1>
+          <h1 className="title">📚 Bookshelf Library</h1>
           <div className="pill">Digital library management</div>
         </div>
         <div className="row">
