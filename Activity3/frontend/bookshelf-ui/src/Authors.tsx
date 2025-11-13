@@ -1,64 +1,109 @@
 import React, { useEffect, useState } from 'react';
+import { listAuthors, createAuthor, deleteAuthor, type Author } from './api';
 
 export default function Authors() {
-  const [authors, setAuthors] = useState<string[]>(() => {
-    try {
-      const raw = localStorage.getItem('authors');
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [authors, setAuthors] = useState<Author[]>([]);
   const [value, setValue] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // keep local state in sync if other tabs change storage
-    function onStorage(e: StorageEvent) {
-      if (e.key === 'authors') setAuthors(prev => {
-        try { return JSON.parse(localStorage.getItem('authors') || '[]'); } catch { return prev; }
-      });
-    }
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    loadAuthors();
   }, []);
 
-  function saveList(next: string[]) {
-    setAuthors(next);
-    localStorage.setItem('authors', JSON.stringify(next));
-    window.dispatchEvent(new Event('authors:changed')); // notify same-tab listeners
+  async function loadAuthors() {
+    try {
+      setLoading(true);
+      const data = await listAuthors();
+      setAuthors(data);
+    } catch (error) {
+      console.error('Failed to load authors:', error);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function addAuthor() {
+  async function addAuthor() {
     const name = value.trim();
     if (!name) return;
-    if (authors.find(a => a.toLowerCase() === name.toLowerCase())) { setValue(''); return; }
-    saveList([name, ...authors]);
-    setValue('');
+    if (authors.find(a => a.name.toLowerCase() === name.toLowerCase())) {
+      setValue('');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await createAuthor(name);
+      setValue('');
+      await loadAuthors();
+    } catch (error: any) {
+      console.error('Failed to create author:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to create author. Please try again.';
+      alert(errorMessage);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  function removeAuthor(index: number) {
-    const next = authors.slice();
-    next.splice(index, 1);
-    saveList(next);
+  async function removeAuthor(id: number) {
+    if (!confirm('Are you sure you want to delete this author?')) return;
+    try {
+      await deleteAuthor(id);
+      await loadAuthors();
+    } catch (error: any) {
+      console.error('Failed to delete author:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to delete author. Please try again.';
+      alert(errorMessage);
+    }
+  }
+
+  if (loading) {
+    return <p>Loading...</p>;
   }
 
   return (
     <div>
-      <h2>Authors</h2>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input value={value} onChange={e => setValue(e.target.value)} placeholder="New author" />
-        <button onClick={addAuthor}>Add</button>
+      <div className="row" style={{ marginBottom: 16 }}>
+        <input
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyPress={e => e.key === 'Enter' && addAuthor()}
+          placeholder="New author name"
+          className="input"
+          style={{ flex: 1 }}
+        />
+        <button
+          onClick={addAuthor}
+          disabled={submitting || !value.trim()}
+          className="button primary"
+        >
+          {submitting ? 'Adding...' : 'Add'}
+        </button>
       </div>
-      <ul>
-        {authors.map((a, i) => (
-          <li key={a + i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span>{a}</span>
-            <button onClick={() => removeAuthor(i)}>Delete</button>
+
+      <ul className="list">
+        {authors.map(author => (
+          <li key={author.id} className="card">
+            <div className="item">
+              <div className="item-main">
+                <div className="item-title">{author.name}</div>
+              </div>
+              <button
+                onClick={() => removeAuthor(author.id)}
+                className="button"
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
+
+      {authors.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--muted)' }}>
+          No authors yet
+        </div>
+      )}
     </div>
   );
 }
-
-

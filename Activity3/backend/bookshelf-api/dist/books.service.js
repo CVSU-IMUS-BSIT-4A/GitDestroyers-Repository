@@ -22,11 +22,24 @@ let BooksService = class BooksService {
     constructor(repo) {
         this.repo = repo;
     }
-    create(title, authorId, categoryId) {
-        const book = this.repo.create({ title, author: authorId ? { id: authorId } : null, category: categoryId ? { id: categoryId } : null });
+    create(payload) {
+        const book = this.repo.create({
+            title: payload.title,
+            author: payload.authorId ? { id: payload.authorId } : null,
+            category: payload.categoryId ? { id: payload.categoryId } : null,
+            publishedYear: payload.publishedYear,
+            isbn: payload.isbn,
+            pageCount: payload.pageCount,
+            coverUrl: payload.coverUrl,
+            plot: payload.plot,
+            borrowed: false,
+            borrowedDate: null,
+        });
         return this.repo.save(book);
     }
-    findAll() { return this.repo.find({ relations: { author: true, category: true }, order: { createdAt: 'DESC' } }); }
+    findAll() {
+        return this.repo.find({ relations: { author: true, category: true }, order: { createdAt: 'DESC' } });
+    }
     async findOne(id) {
         const item = await this.repo.findOne({ where: { id }, relations: { author: true, category: true } });
         if (!item)
@@ -41,6 +54,28 @@ let BooksService = class BooksService {
             book.author = payload.authorId ? { id: payload.authorId } : null;
         if (payload.categoryId !== undefined)
             book.category = payload.categoryId ? { id: payload.categoryId } : null;
+        if (payload.publishedYear !== undefined)
+            book.publishedYear = payload.publishedYear;
+        if (payload.isbn !== undefined)
+            book.isbn = payload.isbn;
+        if (payload.pageCount !== undefined)
+            book.pageCount = payload.pageCount;
+        if (payload.coverUrl !== undefined)
+            book.coverUrl = payload.coverUrl;
+        if (payload.plot !== undefined)
+            book.plot = payload.plot;
+        return this.repo.save(book);
+    }
+    async borrow(id) {
+        const book = await this.findOne(id);
+        book.borrowed = true;
+        book.borrowedDate = new Date();
+        return this.repo.save(book);
+    }
+    async return(id) {
+        const book = await this.findOne(id);
+        book.borrowed = false;
+        book.borrowedDate = null;
         return this.repo.save(book);
     }
     async remove(id) {

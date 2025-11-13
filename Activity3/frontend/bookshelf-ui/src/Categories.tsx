@@ -1,103 +1,110 @@
 import React, { useEffect, useState } from 'react';
-
-type Category = {
-  id?: string;
-  name: string;
-};
+import { listCategories, createCategory, deleteCategory, type Category } from './api';
 
 export default function Categories() {
-  const [categories, setCategories] = useState<Category[]>(() => {
-    try {
-      const raw = localStorage.getItem('categories');
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
-  
+  const [categories, setCategories] = useState<Category[]>([]);
   const [value, setValue] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    function onStorage(e: StorageEvent) {
-      if (e.key === 'categories') {
-        setCategories(prev => {
-          try {
-            const raw = localStorage.getItem('categories');
-            return raw ? JSON.parse(raw) : prev;
-          } catch {
-            return prev;
-          }
-        });
-      }
-    }
-    
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    loadCategories();
   }, []);
 
-  function saveList(next: Category[]) {
-    setCategories(next);
-    localStorage.setItem('categories', JSON.stringify(next));
-    window.dispatchEvent(new Event('categories:changed'));
+  async function loadCategories() {
+    try {
+      setLoading(true);
+      const data = await listCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function addCategory() {
+  async function addCategory() {
     const name = value.trim();
     if (!name) return;
-    
+
     if (categories.find(c => c.name.toLowerCase() === name.toLowerCase())) {
       setValue('');
       return;
     }
 
-    const newCategory: Category = {
-      id: crypto.randomUUID?.() ?? String(Date.now()),
-      name
-    };
-
-    saveList([newCategory, ...categories]);
-    setValue('');
+    try {
+      setSubmitting(true);
+      await createCategory(name);
+      setValue('');
+      await loadCategories();
+    } catch (error: any) {
+      console.error('Failed to create category:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to create category. Please try again.';
+      alert(errorMessage);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  function removeCategory(index: number) {
-    const next = categories.slice();
-    next.splice(index, 1);
-    saveList(next);
+  async function removeCategory(id: number) {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    try {
+      await deleteCategory(id);
+      await loadCategories();
+    } catch (error: any) {
+      console.error('Failed to delete category:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to delete category. Please try again.';
+      alert(errorMessage);
+    }
+  }
+
+  if (loading) {
+    return <p>Loading...</p>;
   }
 
   return (
     <div>
-      <h2>Categories</h2>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <input 
-          value={value} 
+      <div className="row" style={{ marginBottom: 16 }}>
+        <input
+          value={value}
           onChange={e => setValue(e.target.value)}
-          placeholder="New category"
           onKeyPress={e => e.key === 'Enter' && addCategory()}
+          placeholder="New category name"
+          className="input"
+          style={{ flex: 1 }}
         />
-        <button onClick={addCategory}>Add</button>
+        <button
+          onClick={addCategory}
+          disabled={submitting || !value.trim()}
+          className="button primary"
+        >
+          {submitting ? 'Adding...' : 'Add'}
+        </button>
       </div>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {categories.map((category, i) => (
-          <li 
-            key={category.id ?? i} 
-            style={{ 
-              display: 'flex', 
-              gap: 8, 
-              alignItems: 'center',
-              marginBottom: 8,
-              padding: 8,
-              border: '1px solid #ddd',
-              borderRadius: 4
-            }}
-          >
-            <span>{category.name}</span>
-            <button onClick={() => removeCategory(i)}>Delete</button>
+
+      <ul className="list">
+        {categories.map(category => (
+          <li key={category.id} className="card">
+            <div className="item">
+              <div className="item-main">
+                <div className="item-title">{category.name}</div>
+              </div>
+              <button
+                onClick={() => removeCategory(category.id)}
+                className="button"
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
+
+      {categories.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--muted)' }}>
+          No categories yet
+        </div>
+      )}
     </div>
   );
 }
-
-

@@ -7,5 +7,7 @@ export declare class BooksController {
     findAll(): Promise<import("./entities/book.entity").Book[]>;
     findOne(id: number): Promise<import("./entities/book.entity").Book>;
     update(id: number, dto: UpdateBookDto): Promise<import("./entities/book.entity").Book>;
+    borrow(id: number): Promise<import("./entities/book.entity").Book>;
+    returnBook(id: number): Promise<import("./entities/book.entity").Book>;
     remove(id: number): Promise<void>;
 }

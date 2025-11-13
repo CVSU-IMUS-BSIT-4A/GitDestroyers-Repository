@@ -22,15 +22,50 @@ let BooksController = class BooksController {
     constructor(service) {
         this.service = service;
     }
-    create(dto) { return this.service.create(dto.title, dto.authorId, dto.categoryId); }
-    findAll() { return this.service.findAll(); }
-    findOne(id) { return this.service.findOne(id); }
-    update(id, dto) { return this.service.update(id, dto); }
-    remove(id) { return this.service.remove(id); }
+    create(dto) {
+        return this.service.create({
+            title: dto.title,
+            authorId: dto.authorId,
+            categoryId: dto.categoryId,
+            publishedYear: dto.publishedYear,
+            isbn: dto.isbn,
+            pageCount: dto.pageCount,
+            coverUrl: dto.coverUrl,
+            plot: dto.plot,
+        });
+    }
+    findAll() {
+        return this.service.findAll();
+    }
+    findOne(id) {
+        return this.service.findOne(id);
+    }
+    update(id, dto) {
+        return this.service.update(id, {
+            title: dto.title,
+            authorId: dto.authorId,
+            categoryId: dto.categoryId,
+            publishedYear: dto.publishedYear,
+            isbn: dto.isbn,
+            pageCount: dto.pageCount,
+            coverUrl: dto.coverUrl,
+            plot: dto.plot,
+        });
+    }
+    borrow(id) {
+        return this.service.borrow(id);
+    }
+    returnBook(id) {
+        return this.service.return(id);
+    }
+    remove(id) {
+        return this.service.remove(id);
+    }
 };
 exports.BooksController = BooksController;
 __decorate([
     (0, common_1.Post)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a new book' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_book_dto_1.CreateBookDto]),
@@ -38,12 +73,14 @@ __decorate([
 ], BooksController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all books' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], BooksController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get a book by ID' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
@@ -51,6 +88,7 @@ __decorate([
 ], BooksController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update a book' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -58,7 +96,24 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], BooksController.prototype, "update", null);
 __decorate([
+    (0, common_1.Post)(':id/borrow'),
+    (0, swagger_1.ApiOperation)({ summary: 'Borrow a book' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], BooksController.prototype, "borrow", null);
+__decorate([
+    (0, common_1.Post)(':id/return'),
+    (0, swagger_1.ApiOperation)({ summary: 'Return a borrowed book' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], BooksController.prototype, "returnBook", null);
+__decorate([
     (0, common_1.Delete)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete a book' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),

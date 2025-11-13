@@ -15,6 +15,11 @@ class CreateBookDto {
     title;
     authorId;
     categoryId;
+    publishedYear;
+    isbn;
+    pageCount;
+    coverUrl;
+    plot;
 }
 exports.CreateBookDto = CreateBookDto;
 __decorate([
@@ -33,10 +38,44 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateBookDto.prototype, "categoryId", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.Min)(1000),
+    __metadata("design:type", Number)
+], CreateBookDto.prototype, "publishedYear", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.Matches)(/^[0-9Xx-]{10,17}$/, { message: 'ISBN must be 10-13 digits (dashes/spaces allowed)' }),
+    __metadata("design:type", String)
+], CreateBookDto.prototype, "isbn", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], CreateBookDto.prototype, "pageCount", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateBookDto.prototype, "coverUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MinLength)(100, { message: 'Plot must be at least 100 characters long' }),
+    __metadata("design:type", String)
+], CreateBookDto.prototype, "plot", void 0);
 class UpdateBookDto {
     title;
     authorId;
     categoryId;
+    publishedYear;
+    isbn;
+    pageCount;
+    coverUrl;
+    plot;
 }
 exports.UpdateBookDto = UpdateBookDto;
 __decorate([
@@ -55,4 +94,33 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Object)
 ], UpdateBookDto.prototype, "categoryId", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Min)(1000),
+    __metadata("design:type", Object)
+], UpdateBookDto.prototype, "publishedYear", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Matches)(/^[0-9Xx-]{10,17}$/, { message: 'ISBN must be 10-13 digits (dashes/spaces allowed)' }),
+    __metadata("design:type", Object)
+], UpdateBookDto.prototype, "isbn", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Object)
+], UpdateBookDto.prototype, "pageCount", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], UpdateBookDto.prototype, "coverUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MinLength)(100, { message: 'Plot must be at least 100 characters long' }),
+    __metadata("design:type", Object)
+], UpdateBookDto.prototype, "plot", void 0);
 //# sourceMappingURL=create-book.dto.js.map

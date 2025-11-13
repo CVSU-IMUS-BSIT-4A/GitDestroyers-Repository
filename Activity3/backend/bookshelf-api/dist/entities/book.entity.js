@@ -18,6 +18,13 @@ let Book = class Book {
     title;
     author;
     category;
+    publishedYear;
+    isbn;
+    pageCount;
+    coverUrl;
+    plot;
+    borrowed;
+    borrowedDate;
     createdAt;
     updatedAt;
 };
@@ -38,6 +45,34 @@ __decorate([
     (0, typeorm_1.ManyToOne)(() => category_entity_1.Category, (category) => category.books, { onDelete: 'SET NULL', nullable: true }),
     __metadata("design:type", Object)
 ], Book.prototype, "category", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'integer', nullable: true }),
+    __metadata("design:type", Object)
+], Book.prototype, "publishedYear", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", Object)
+], Book.prototype, "isbn", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'integer', nullable: true }),
+    __metadata("design:type", Object)
+], Book.prototype, "pageCount", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", Object)
+], Book.prototype, "coverUrl", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", Object)
+], Book.prototype, "plot", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], Book.prototype, "borrowed", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Object)
+], Book.prototype, "borrowedDate", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ type: 'datetime' }),
     __metadata("design:type", Date)

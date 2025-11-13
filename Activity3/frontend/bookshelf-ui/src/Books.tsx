@@ -1,20 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BookPreviewModal } from './components/BookPreviewModal';
-
-// Update the Book type to include borrowed status
-type Book = {
-  id: string;
-  title: string;
-  author?: string;
-  category?: string;
-  publishedYear?: number | null;
-  isbn?: string;
-  pageCount?: number | null;
-  coverUrl?: string;
-  plot?: string;
-  borrowed?: boolean;
-  borrowedDate?: string;
-};
+import { listBooks, borrowBook, returnBook, deleteBook, type Book } from './api';
+import { Search, X } from 'lucide-react';
 
 type Filter = {
   search: string;
@@ -22,328 +9,227 @@ type Filter = {
   category: string;
 };
 
-const ITEMS_PER_PAGE = 5; // Adjust this number to change items per page
+const ITEMS_PER_PAGE_OPTIONS = [5, 10, 20];
 
 export default function Books() {
-  const [books, setBooks] = useState<Book[]>(() => {
-    try {
-      const raw = localStorage.getItem('books');
-      return raw ? (JSON.parse(raw) as Book[]) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Add filter state
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<Filter>({
     search: '',
     author: '',
     category: '',
   });
-
-  // Add unique authors and categories lists
-  const uniqueAuthors = Array.from(new Set(books.map(b => b.author).filter(Boolean)));
-  const uniqueCategories = Array.from(new Set(books.map(b => b.category).filter(Boolean)));
-
-  // Add pagination state
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Add this after your existing useState declarations
-  const [borrowedBooks, setBorrowedBooks] = useState<Set<string>>(() => {
-    try {
-      const raw = localStorage.getItem('borrowedBooks');
-      return new Set(raw ? JSON.parse(raw) : []);
-    } catch {
-      return new Set();
-    }
-  });
-
-  // Add this state near your other useState declarations
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [previewBook, setPreviewBook] = useState<Book | null>(null);
 
-  // Filter books based on search and filters
-  const filteredBooks = books.filter(book => {
-    const matchesSearch = !filters.search || 
-      book.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      book.author?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      book.category?.toLowerCase().includes(filters.search.toLowerCase());
+  useEffect(() => {
+    loadBooks();
+  }, []);
 
-    const matchesAuthor = !filters.author || book.author === filters.author;
-    const matchesCategory = !filters.category || book.category === filters.category;
+  async function loadBooks() {
+    try {
+      setLoading(true);
+      const data = await listBooks();
+      setBooks(data);
+    } catch (error) {
+      console.error('Failed to load books:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const uniqueAuthors = Array.from(new Set(books.map(b => b.author?.name).filter(Boolean) as string[]));
+  const uniqueCategories = Array.from(new Set(books.map(b => b.category?.name).filter(Boolean) as string[]));
+
+  const filteredBooks = books.filter(book => {
+    const matchesSearch = !filters.search ||
+      book.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      book.author?.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      book.category?.name?.toLowerCase().includes(filters.search.toLowerCase());
+
+    const matchesAuthor = !filters.author || book.author?.name === filters.author;
+    const matchesCategory = !filters.category || book.category?.name === filters.category;
 
     return matchesSearch && matchesAuthor && matchesCategory;
   });
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredBooks.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedBooks = filteredBooks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedBooks = filteredBooks.slice(startIndex, startIndex + itemsPerPage);
 
-  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters]);
+  }, [filters, itemsPerPage]);
 
-  useEffect(() => {
-    function refresh() {
-      try {
-        const raw = localStorage.getItem('books');
-        setBooks(raw ? (JSON.parse(raw) as Book[]) : []);
-      } catch {
-        // ignore
-      }
-    }
-
-    // storage events from other tabs
-    function onStorage(e: StorageEvent) {
-      if (e.key === 'books') refresh();
-    }
-    window.addEventListener('storage', onStorage);
-
-    // custom event from ManageBooks in same tab
-    function onBooksChanged() {
-      refresh();
-    }
-    window.addEventListener('books:changed', onBooksChanged as EventListener);
-
-    // initial
-    refresh();
-
-    return () => {
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener('books:changed', onBooksChanged as EventListener);
-    };
-  }, []);
-
-  function handleDelete(id: string) {
-    const next = books.filter(b => b.id !== id);
-    setBooks(next);
+  async function handleBorrow(id: number) {
     try {
-      localStorage.setItem('books', JSON.stringify(next));
-      window.dispatchEvent(new Event('books:changed'));
-    } catch {}
+      const book = books.find(b => b.id === id);
+      if (!book) return;
+
+      if (book.borrowed) {
+        await returnBook(id);
+      } else {
+        await borrowBook(id);
+      }
+      await loadBooks();
+    } catch (error) {
+      console.error('Failed to update borrow status:', error);
+    }
   }
 
-  // Add this function to handle borrowing
-  function handleBorrow(id: string) {
-    const nextBorrowed = new Set(borrowedBooks);
-    const book = books.find(b => b.id === id);
-    
-    if (!book) return;
-    
-    if (nextBorrowed.has(id)) {
-      nextBorrowed.delete(id);
-    } else {
-      nextBorrowed.add(id);
-    }
-    
-    setBorrowedBooks(nextBorrowed);
-    
-    // Update the book's borrowed status
-    const nextBooks = books.map(b => {
-      if (b.id === id) {
-        return {
-          ...b,
-          borrowed: !b.borrowed,
-          borrowedDate: !b.borrowed ? new Date().toISOString() : undefined
-        };
-      }
-      return b;
-    });
-    
-    setBooks(nextBooks);
-    
-    // Save both states to localStorage
+  async function handleDelete(id: number) {
+    if (!confirm('Are you sure you want to delete this book?')) return;
     try {
-      localStorage.setItem('borrowedBooks', JSON.stringify([...nextBorrowed]));
-      localStorage.setItem('books', JSON.stringify(nextBooks));
-      window.dispatchEvent(new Event('books:changed'));
-    } catch {}
+      await deleteBook(id);
+      await loadBooks();
+    } catch (error) {
+      console.error('Failed to delete book:', error);
+    }
   }
 
-  // Pagination controls component
-  const PaginationControls = () => (
-    <div style={{ 
-      display: 'flex', 
-      gap: 8, 
-      alignItems: 'center',
-      justifyContent: 'center',
-      margin: '24px 0'
-    }}>
-      <button 
-        onClick={() => setCurrentPage(1)} 
-        disabled={currentPage === 1}
-      >
-        First
-      </button>
-      <button 
-        onClick={() => setCurrentPage(p => p - 1)} 
-        disabled={currentPage === 1}
-      >
-        Previous
-      </button>
-      <span style={{ margin: '0 16px' }}>
-        Page {currentPage} of {totalPages || 1}
-      </span>
-      <button 
-        onClick={() => setCurrentPage(p => p + 1)} 
-        disabled={currentPage === totalPages}
-      >
-        Next
-      </button>
-      <button 
-        onClick={() => setCurrentPage(totalPages)} 
-        disabled={currentPage === totalPages}
-      >
-        Last
-      </button>
-      <select 
-        value={ITEMS_PER_PAGE} 
-        onChange={(e) => {
-          const newPerPage = Number(e.target.value);
-          const newTotalPages = Math.ceil(filteredBooks.length / newPerPage);
-          setCurrentPage(1);
-          // You would need to add state for itemsPerPage if you want this to be changeable
-        }}
-        style={{ marginLeft: 16 }}
-      >
-        <option value={5}>5 per page</option>
-        <option value={10}>10 per page</option>
-        <option value={20}>20 per page</option>
-      </select>
-    </div>
-  );
+  if (loading) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <div>
-     
-
-      {/* Add filter controls */}
-      <div style={{ 
-        background: '#f5f5f5', 
-        padding: 16, 
-        borderRadius: 8, 
-        marginBottom: 24 
-      }}>
-        <h3 style={{ margin: '0 0 12px 0' }}>What Books are you looking for?</h3>
-        <div style={{ display: 'grid', gap: 12, maxWidth: 600 }}>
+      <div className="controls" style={{ marginBottom: 12 }}>
+        <div style={{ position: 'relative' }}>
+          <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
           <input
             type="text"
-            placeholder="Search by title, author, or category..."
+            placeholder="Search books..."
             value={filters.search}
             onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
-            style={{ padding: '8px 12px' }}
+            className="input"
+            style={{ paddingLeft: 40 }}
           />
-
-          <div style={{ display: 'flex', gap: 12 }}>
-            <select
-              value={filters.author}
-              onChange={e => setFilters(prev => ({ ...prev, author: e.target.value }))}
-              style={{ padding: '8px 12px', flex: 1 }}
-            >
-              <option value="">All Authors</option>
-              {uniqueAuthors.map(author => (
-                <option key={author} value={author}>{author}</option>
-              ))}
-            </select>
-
-            <select
-              value={filters.category}
-              onChange={e => setFilters(prev => ({ ...prev, category: e.target.value }))}
-              style={{ padding: '8px 12px', flex: 1 }}
-            >
-              <option value="">All Categories</option>
-              {uniqueCategories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-
-            <button
-              onClick={() => setFilters({ search: '', author: '', category: '' })}
-              style={{ padding: '8px 16px' }}
-            >
-              Reset Filters
-            </button>
-          </div>
         </div>
+        <select
+          value={filters.author}
+          onChange={e => setFilters(prev => ({ ...prev, author: e.target.value }))}
+          className="select"
+        >
+          <option value="">All Authors</option>
+          {uniqueAuthors.map(author => (
+            <option key={author} value={author}>{author}</option>
+          ))}
+        </select>
+        <select
+          value={filters.category}
+          onChange={e => setFilters(prev => ({ ...prev, category: e.target.value }))}
+          className="select"
+        >
+          <option value="">All Categories</option>
+          {uniqueCategories.map(category => (
+            <option key={category} value={category}>{category}</option>
+          ))}
+        </select>
+        <select
+          value={itemsPerPage}
+          onChange={e => {
+            setItemsPerPage(Number(e.target.value));
+            setCurrentPage(1);
+          }}
+          className="select"
+        >
+          {ITEMS_PER_PAGE_OPTIONS.map(opt => (
+            <option key={opt} value={opt}>Show {opt}</option>
+          ))}
+        </select>
+        {(filters.search || filters.author || filters.category) && (
+          <button
+            onClick={() => setFilters({ search: '', author: '', category: '' })}
+            className="button"
+            style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+          >
+            <X size={14} />
+            Clear
+          </button>
+        )}
       </div>
 
-      <h3>Books ({filteredBooks.length} of {books.length})</h3>
-      
-      {/* Add top pagination */}
-      {filteredBooks.length > ITEMS_PER_PAGE && <PaginationControls />}
+      <div style={{ marginBottom: 12, color: 'var(--muted)', fontSize: 14 }}>
+        {filteredBooks.length} of {books.length} books
+      </div>
 
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {paginatedBooks.map(b => (
-          <li key={b.id} style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'flex-start' }}>
-            <div style={{ width: 96, height: 140, background: '#f4f4f4', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {b.coverUrl ? <img src={b.coverUrl} alt={b.title} style={{ maxWidth: '100%', maxHeight: '100%' }} /> : <small>No cover</small>}
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <strong>{b.title}</strong>
-                {b.borrowed && (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 4,
-                    color: '#2e7d32',
-                    fontSize: 14 
-                  }}>
-                    <div style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      backgroundColor: '#2e7d32'
-                    }} />
-                    Borrowed
-                    {b.borrowedDate && (
-                      <span style={{ color: '#666', fontSize: 12 }}>
-                        ({new Date(b.borrowedDate).toLocaleDateString()})
-                      </span>
-                    )}
+      {filteredBooks.length > itemsPerPage && (
+        <div className="row" style={{ marginBottom: 12, justifyContent: 'center', gap: 8 }}>
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="button"
+          >
+            First
+          </button>
+          <button
+            onClick={() => setCurrentPage(p => p - 1)}
+            disabled={currentPage === 1}
+            className="button"
+          >
+            Previous
+          </button>
+          <span style={{ color: 'var(--muted)', padding: '0 8px' }}>
+            {currentPage} / {totalPages || 1}
+          </span>
+          <button
+            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={currentPage === totalPages}
+            className="button"
+          >
+            Next
+          </button>
+          <button
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+            className="button"
+          >
+            Last
+          </button>
+        </div>
+      )}
+
+      <ul className="list">
+        {paginatedBooks.map(book => (
+          <li key={book.id} className="card">
+            <div className="item">
+              <div className="book-cover">
+                {book.coverUrl ? (
+                  <img src={book.coverUrl} alt={book.title} />
+                ) : (
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>No cover</span>
+                )}
+              </div>
+              <div className="item-main">
+                <div className="item-title">{book.title}</div>
+                {book.author?.name && (
+                  <div className="item-desc" style={{ marginTop: 4 }}>{book.author.name}</div>
+                )}
+                {book.borrowed && (
+                  <div className="chip success" style={{ marginTop: 8, display: 'inline-block' }}>
+                    Borrowed{book.borrowedDate && ` on ${new Date(book.borrowedDate).toLocaleDateString()}`}
                   </div>
                 )}
               </div>
-              <div>{b.author && <span>By {b.author} · </span>}{b.category && <span>{b.category} · </span>}</div>
-              <div style={{ marginTop: 6, fontSize: 13, color: '#444' }}>
-                {b.publishedYear ? <span>Published: {b.publishedYear} · </span> : null}
-                {b.isbn ? <span>ISBN: {b.isbn} · </span> : null}
-                {b.pageCount ? <span>{b.pageCount} pages</span> : null}
-              </div>
-              {/* Plot section */}
-              {b.plot && (
-                <details style={{ marginTop: 8 }}>
-                  <summary style={{ cursor: 'pointer' }}>Plot</summary>
-                  <p style={{ margin: '8px 0', fontSize: 14 }}>{b.plot}</p>
-                </details>
-              )}
-              <div style={{ marginTop: 8 }}>
-                <button 
-                  onClick={() => setPreviewBook(b)}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 4,
-                    border: '1px solid #ddd',
-                    background: 'white',
-                    cursor: 'pointer'
-                  }}
+              <div className="row" style={{ gap: 8 }}>
+                <button
+                  onClick={() => setPreviewBook(book)}
+                  className="button"
                 >
-                  Preview Book
+                  Preview
                 </button>
-                <button 
-                  onClick={() => handleBorrow(b.id)} 
-                  style={{ 
-                    marginLeft: 8,
-                    backgroundColor: b.borrowed ? '#f44336' : '#4caf50',
-                    color: 'white',
-                    border: 'none',
-                    padding: '6px 12px',
-                    borderRadius: 4,
-                    cursor: 'pointer'
-                  }}
+                <button
+                  onClick={() => handleBorrow(book.id)}
+                  className={`button ${book.borrowed ? '' : 'primary'}`}
                 >
-                  {b.borrowed ? 'Return Book' : 'Borrow'}
+                  {book.borrowed ? 'Return' : 'Borrow'}
+                </button>
+                <button
+                  onClick={() => handleDelete(book.id)}
+                  className="button"
+                >
+                  Delete
                 </button>
               </div>
             </div>
@@ -351,30 +237,54 @@ export default function Books() {
         ))}
       </ul>
 
-      {/* Add bottom pagination */}
-      {filteredBooks.length > ITEMS_PER_PAGE && <PaginationControls />}
+      {filteredBooks.length > itemsPerPage && (
+        <div className="row" style={{ marginTop: 12, justifyContent: 'center', gap: 8 }}>
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="button"
+          >
+            First
+          </button>
+          <button
+            onClick={() => setCurrentPage(p => p - 1)}
+            disabled={currentPage === 1}
+            className="button"
+          >
+            Previous
+          </button>
+          <span style={{ color: 'var(--muted)', padding: '0 8px' }}>
+            {currentPage} / {totalPages || 1}
+          </span>
+          <button
+            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={currentPage === totalPages}
+            className="button"
+          >
+            Next
+          </button>
+          <button
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+            className="button"
+          >
+            Last
+          </button>
+        </div>
+      )}
 
-      {/* Show message if no results */}
       {filteredBooks.length === 0 && (
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '32px 16px',
-          color: '#666',
-          background: '#f5f5f5',
-          borderRadius: 8
-        }}>
-          No books found matching your filters
+        <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--muted)' }}>
+          No books found
         </div>
       )}
 
       {previewBook && (
-        <BookPreviewModal 
-          book={previewBook} 
-          onClose={() => setPreviewBook(null)} 
+        <BookPreviewModal
+          book={previewBook}
+          onClose={() => setPreviewBook(null)}
         />
       )}
     </div>
   );
 }
-
-
