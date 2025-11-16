@@ -185,9 +185,9 @@ export default function Books() {
                 </button>
                 <button
                   onClick={() => handleBorrow(book.id)}
-                  className={`button ${book.borrowed ? '' : 'primary'}`}
-                >
-                  {book.borrowed ? 'Return Book' : 'Borrow'}
+                  className={`button ${book.borrowed ? 'return' : 'primary'}`}
+                    >
+                    {book.borrowed ? 'Return Book' : 'Borrow'}
                 </button>
                 <button
                   onClick={() => handleDelete(book.id)}

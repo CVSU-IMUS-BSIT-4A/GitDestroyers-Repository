@@ -1,21 +1,21 @@
 /* Theme variables */
 :root {
-  --bg: #0b0c0f;
+  --bg: #171c2c;
   --elev: #12141a;
   --text: #e6e7eb;
   --muted: #9aa0aa;
   --primary: #4f8cff;
-  --border: #242733;
+  --border: #ffffff;
   --ring: rgba(79, 140, 255, 0.35);
 }
 
 .theme-light {
-  --bg: #f7f8fa;
+  --bg: #f4f4f5;
   --elev: #ffffff;
   --text: #0b0c0f;
   --muted: #6b7280;
   --primary: #3b82f6;
-  --border: #e5e7eb;
+  --border: #949494;
   --ring: rgba(59, 130, 246, 0.25);
 }
 
@@ -75,6 +75,12 @@ body {
 .checkbox-complete { accent-color: #22c55e; }
 .checkbox:focus { box-shadow: 0 0 0 3px var(--ring); border-radius: 4px; }
 
+.button.return {
+  background: #ff2f2f; /* or any color you want */
+  color: white;
+  border-color: transparent;
+}
+
 .button {
   padding: 10px 14px;
   border-radius: 10px;
@@ -85,13 +91,15 @@ body {
   transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .12s ease, box-shadow .2s;
   font-size: 14px;
 }
-.button.primary { background: var(--primary); color: white; border-color: transparent; }
+.button.primary { background: var(--primary); color: rgb(255, 255, 255); border-color: transparent; }
 .button.success { background: #16a34a; color: white; border-color: transparent; }
 .button.danger { background: #ef4444; color: white; border-color: transparent; }
 .button.ghost { background: transparent; }
 .button:disabled { opacity: .5; cursor: not-allowed; }
 .button:hover { transform: translateY(-1px); }
 .button:active { transform: translateY(0); box-shadow: none; }
+
+
 
 /* Cards/List */
 .card {
