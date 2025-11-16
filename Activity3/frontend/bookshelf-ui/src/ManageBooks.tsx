@@ -473,33 +473,70 @@ export default function ManageBooks() {
           {errors.pageCount && <span style={{ color: '#ef4444', fontSize: 12, marginTop: 4, display: 'block' }}>{errors.pageCount}</span>}
         </div>
 
-        {/* Cover Image */}
-        <div>
-          <label className="label">Cover Image *</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleCoverFileChange}
-            style={{ fontSize: 14 }}
-          />
-          {form.coverUrl && (
-            <div style={{ marginTop: 16 }}>
-              <img
-                src={form.coverUrl}
-                alt="cover preview"
-                className="book-cover"
-                style={{ width: 96, height: 128 }}
-              />
-              <button
-                type="button"
-                onClick={removeCoverImage}
-                className="button"
-                style={{ marginTop: 8, fontSize: 12, padding: '6px 12px' }}
-              >
-                Remove
-              </button>
-            </div>
-          )}
+              {/* Cover Image */}
+<div>
+  <label className="label">Cover Image *</label>
+
+  {/* Hidden file input */}
+  <input
+    id="coverUpload"
+    type="file"
+    accept="image/*"
+    onChange={handleCoverFileChange}
+    style={{ display: "none" }}
+  />
+
+  {/* Custom upload button */}
+  <label
+    htmlFor="coverUpload"
+    style={{
+      display: "inline-block",
+      padding: "8px 14px",
+      background: "#3b82f6",
+      color: "white",
+      borderRadius: 6,
+      cursor: "pointer",
+      fontSize: 14,
+      fontWeight: 500
+    }}
+  >
+    Upload Cover
+  </label>
+
+  {/* Show file name (optional) */}
+  {form.coverUrl && (
+    <span style={{ marginLeft: 10, fontSize: 14, color: "#555" }}>
+      Selected
+    </span>
+  )}
+
+  {/* Preview + remove */}
+  {form.coverUrl && (
+    <div style={{ marginTop: 16 }}>
+      <img
+        src={form.coverUrl}
+        alt="cover preview"
+        className="book-cover"
+        style={{ width: 96, height: 128, borderRadius: 6 }}
+      />
+
+      <button
+        type="button"
+        onClick={removeCoverImage}
+        className="button"
+        style={{
+          marginTop: 8,
+          fontSize: 12,
+          padding: "6px 12px",
+          background: "#e11d48",
+          color: "white",
+          borderRadius: 6
+        }}
+      >
+        Remove
+      </button>
+    </div>
+  )}  
           {errors.coverUrl && <span style={{ color: '#ef4444', fontSize: 12, marginTop: 4, display: 'block' }}>{errors.coverUrl}</span>}
         </div>
 
